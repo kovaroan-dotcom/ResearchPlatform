@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="cs" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Škoda X Research Intelligence — interní platforma pro analýzu zmínek ze SentiOne pomocí AI.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+
+  <title>Škoda X Research Intelligence</title>
+
+  <!-- Favicon (inline SVG data URI) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><rect width='18' height='18' rx='4' fill='%230E3A2F'/><path d='M3 9h12M9 3v12M5 5l8 8M13 5l-8 8' stroke='%2378FAAE' stroke-width='1.8' stroke-linecap='round'/></svg>">
+
+  <!-- External libraries (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- App styles -->
+<style>
+:root {
+  --em:#0E3A2F;--el:#78FAAE;--el-dim:rgba(120,250,174,0.15);--el-mid:rgba(120,250,174,0.32);
+  --w:#F5F7F4;--g:#7a9e93;--b:rgba(120,250,174,0.28);--card:rgba(255,255,255,0.08);
+  --bg:#0d3328;--surf:rgba(255,255,255,0.08);--tx:#F0F5F2;--txm:#9abfb4;
+  --nav:rgba(11,42,34,0.97);
+}
+[data-theme="light"]{
+  --bg:#f0f4f2;--surf:#fff;--tx:#0E3A2F;--txm:#4a7a65;
+  --b:rgba(14,58,47,0.2);--card:#fff;--nav:rgba(240,244,242,0.96);--el-dim:rgba(14,58,47,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;transition:background .3s,color .3s;}
+nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 2.5rem;border-bottom:1px solid var(--b);position:sticky;top:0;background:var(--nav);backdrop-filter:blur(12px);z-index:100;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em;display:flex;align-items:center;gap:10px;color:var(--tx);}
+.logo-mark{width:32px;height:32px;background:var(--el);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.logo span{color:var(--el);}
+[data-theme="light"] .logo span{color:#0E3A2F;}
+.nav-r{display:flex;align-items:center;gap:8px;}
+.nbadge{background:rgba(120,250,174,0.18);border:1px solid rgba(120,250,174,0.4);color:var(--el);font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;}
+[data-theme="light"] .nbadge{color:#0E3A2F;}
+.tbtn{background:var(--card);border:1px solid var(--b);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.tbtn:hover{border-color:var(--el);}
+.lbtn{background:var(--card);border:1px solid var(--b);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:500;transition:all .2s;}
+.lbtn:hover,.lbtn.active{background:var(--el);color:#0E3A2F;border-color:var(--el);}
+.hero{padding:4.5rem 2.5rem 3.5rem;max-width:860px;}
+.hero-tag{display:inline-block;background:rgba(120,250,174,0.18);border:1px solid rgba(120,250,174,0.4);color:var(--el);font-size:11px;font-weight:500;padding:5px 14px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1.5rem;}
+[data-theme="light"] .hero-tag{color:#0E3A2F;}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.05;letter-spacing:-.03em;margin-bottom:1.25rem;color:var(--tx);}
+h1 em{font-style:normal;color:var(--el);}
+[data-theme="light"] h1 em{color:#0E3A2F;}
+.hero-sub{font-size:17px;color:var(--txm);max-width:540px;line-height:1.7;margin-bottom:2.5rem;}
+.hero-acts{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-p{background:var(--el);color:#0E3A2F;font-family:'DM Sans',sans-serif;font-weight:500;font-size:14px;padding:12px 24px;border-radius:8px;border:none;cursor:pointer;transition:opacity .2s,transform .15s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+.btn-p:hover{opacity:.88;transform:translateY(-1px);}
+.btn-s{background:transparent;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 24px;border-radius:8px;border:1px solid var(--b);cursor:pointer;transition:background .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+.btn-s:hover{background:var(--el-dim);}
+.btn-i{background:var(--card);border:1px solid var(--b);color:var(--txm);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.btn-i:hover,.btn-i.copied{border-color:var(--el);color:var(--el);}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(120,250,174,0.28);border-bottom:1px solid rgba(120,250,174,0.28);margin:0 2.5rem;}
+.stat{padding:1.75rem 2rem;border-right:1px solid var(--b);}
+.stat:last-child{border-right:none;}
+.sv{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:700;color:var(--el);line-height:1;margin-bottom:4px;}
+[data-theme="light"] .sv{color:#0E3A2F;}
+.sl{font-size:13px;color:var(--txm);}
+.main{display:grid;grid-template-columns:1fr 360px;margin:0 2.5rem;border-bottom:1px solid var(--b);}
+.ml{padding:2.5rem 2.5rem 2.5rem 0;border-right:1px solid var(--b);}
+.mr{padding:2.5rem 0 2.5rem 2.5rem;}
+.slabel{font-size:11px;font-weight:500;color:var(--el);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.25rem;}
+[data-theme="light"] .slabel{color:#0E3A2F;}
+.field{margin-bottom:1.25rem;}
+label{display:block;font-size:12px;color:var(--txm);margin-bottom:6px;font-weight:500;}
+input[type="text"],textarea{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(120,250,174,0.3);border-radius:8px;padding:10px 14px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+input[type="text"]:focus,textarea:focus{border-color:var(--el);}
+textarea{resize:vertical;min-height:90px;}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.tybtn{background:#1d6650;border:2px solid rgba(120,250,174,0.55);border-radius:8px;padding:12px;color:#F5F7F4;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-align:left;display:block;width:100%;transition:all .15s;position:relative;}
+[data-theme="light"] .tybtn{background:#e8f5ef;border-color:rgba(14,58,47,0.3);color:#0E3A2F;}
+.tybtn:hover{border-color:#78FAAE;transform:translateY(-1px);}
+[data-theme="light"] .tybtn:hover{border-color:#0E3A2F;}
+.tybtn.active{border-color:#78FAAE;background:#256b4a;border-width:2px;}
+[data-theme="light"] .tybtn.active{border-color:#0E3A2F;background:#c8e6d4;}
+.tybtn .chk{position:absolute;top:8px;right:8px;width:18px;height:18px;background:#78FAAE;border-radius:50%;display:none;align-items:center;justify-content:center;}
+.tybtn.active .chk{display:flex;}
+.tyn{font-weight:500;margin-bottom:3px;color:#F5F7F4;}
+[data-theme="light"] .tyn{color:#0E3A2F;}
+.tyk{font-size:11px;color:#78FAAE;margin-bottom:6px;}
+[data-theme="light"] .tyk{color:#0E3A2F;opacity:.7;}
+.tyd{font-size:11px;color:rgba(245,247,244,0.6);line-height:1.5;}
+[data-theme="light"] .tyd{color:rgba(14,58,47,0.6);}
+.upz{border:1.5px dashed rgba(120,250,174,0.4);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:1.5rem;position:relative;}
+.upz:hover,.upz.drag{border-color:var(--el);background:var(--el-dim);}
+.upi{width:44px;height:44px;background:var(--el-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;}
+.upt{font-weight:500;margin-bottom:3px;font-size:14px;color:var(--tx);}
+.ups{font-size:12px;color:var(--txm);}
+input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;}
+.run-btn{width:100%;justify-content:center;position:relative;overflow:hidden;}
+.run-btn .spinner{display:none;width:14px;height:14px;border:2px solid rgba(14,58,47,.3);border-top-color:#0E3A2F;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.run-btn.running .btext{display:none;}
+.run-btn.running .spinner{display:block;}
+.ppanel{background:rgba(255,255,255,0.07);border:1px solid rgba(120,250,174,0.3);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;}
+.ptitle{font-family:'Syne',sans-serif;font-weight:600;font-size:15px;margin-bottom:1.25rem;color:var(--tx);}
+.pbw{background:rgba(255,255,255,.07);border-radius:4px;height:4px;overflow:hidden;margin-bottom:6px;}
+[data-theme="light"] .pbw{background:rgba(0,0,0,.1);}
+.pbf{height:100%;background:var(--el);border-radius:4px;width:0%;transition:width .5s ease;}
+[data-theme="light"] .pbf{background:#0E3A2F;}
+.pmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--txm);margin-bottom:1.25rem;}
+.pstep{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--b);font-size:13px;color:var(--tx);}
+.pstep:last-child{border-bottom:none;}
+.sdot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:600;}
+.sdone{background:var(--el);color:#0E3A2F;}
+.sact{background:var(--el-dim);border:1.5px solid var(--el);color:var(--el);}
+.spend{background:rgba(255,255,255,.05);color:var(--txm);}
+[data-theme="light"] .spend{background:rgba(0,0,0,.05);}
+.stxt{flex:1;}
+.scnt{font-size:11px;color:var(--el);font-weight:500;}
+[data-theme="light"] .scnt{color:#0E3A2F;}
+.dnote{font-size:12px;color:var(--txm);line-height:1.7;padding:1rem;background:var(--el-dim);border-radius:8px;border:1px solid var(--b);}
+.dnote strong{color:var(--el);display:block;margin-bottom:3px;}
+[data-theme="light"] .dnote strong{color:#0E3A2F;}
+.rsec{margin:0 2.5rem;padding:3rem 0;border-bottom:1px solid var(--b);}
+.rhdr{margin-bottom:1.5rem;}
+.rhdr h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.6rem;margin-bottom:6px;color:var(--tx);}
+.rmeta{font-size:13px;color:var(--txm);}
+.rtbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.5rem;}
+.rtbar-l{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.vbtn{background:var(--card);border:1px solid var(--b);color:var(--txm);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .15s;}
+.vbtn.active{background:var(--el);color:#0E3A2F;border-color:var(--el);font-weight:500;}
+[data-theme="light"] .vbtn.active{background:#0E3A2F;color:#F5F7F4;border-color:#0E3A2F;}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:2.5rem;}
+.cc{background:rgba(255,255,255,0.07);border:1px solid rgba(120,250,174,0.25);border-radius:12px;padding:1.5rem;}
+.cc.wide{grid-column:1/-1;}
+.ct{font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;margin-bottom:1.25rem;}
+[data-theme="light"] .ct{color:#0E3A2F;}
+.cw{position:relative;height:200px;}
+.cw.tall{height:250px;}
+.tw{overflow-x:auto;margin-bottom:2.5rem;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;border-bottom:1px solid var(--b);}
+[data-theme="light"] th{color:#0E3A2F;}
+td{padding:11px 14px;border-bottom:1px solid rgba(120,250,174,.14);vertical-align:middle;color:var(--tx);}
+[data-theme="light"] td{border-bottom-color:rgba(14,58,47,.08);}
+tr:hover td{background:var(--el-dim);}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;}
+.bneg{background:rgba(220,80,80,.15);color:#ff8a8a;}
+[data-theme="light"] .bneg{background:rgba(220,80,80,.1);color:#c0392b;}
+.bpos{background:rgba(120,250,174,.15);color:#78FAAE;}
+[data-theme="light"] .bpos{background:rgba(14,58,47,.1);color:#0E3A2F;}
+.bneu{background:rgba(255,255,255,.08);color:var(--txm);}.bamb{background:rgba(180,140,60,.2);color:#e8c060;}
+.sub-row{background:rgba(120,250,174,0.04);border-bottom:1px solid rgba(120,250,174,.08);}
+.sub-row td{padding:8px 12px 8px 32px;font-size:12px;color:var(--txm);}
+.sub-row:last-child td{border-bottom:none;}
+.expand-btn{background:none;border:none;cursor:pointer;color:var(--el);font-size:13px;padding:0 6px;transition:transform .2s;display:inline-flex;align-items:center;}
+.expand-btn.open{transform:rotate(90deg);}
+.sub-bar-track{display:inline-block;width:60px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;vertical-align:middle;margin:0 6px;}
+[data-theme="light"] .sub-bar-track{background:rgba(0,0,0,.1);}
+.sub-bar-fill{height:100%;background:var(--el);border-radius:2px;}
+[data-theme="light"] .sub-bar-fill{background:#0E3A2F;}
+.sub-quote{font-style:italic;color:var(--txm);font-size:11px;margin-top:3px;padding-left:8px;border-left:2px solid rgba(120,250,174,.3);}
+.bint{background:var(--el-dim);color:var(--el);}
+[data-theme="light"] .bint{color:#0E3A2F;}
+.bm{display:flex;align-items:center;gap:8px;}
+.bmt{width:55px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;}
+[data-theme="light"] .bmt{background:rgba(0,0,0,.1);}
+.bmf{height:100%;background:var(--el);border-radius:2px;}
+[data-theme="light"] .bmf{background:#0E3A2F;}
+.air{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:2rem;}
+.aic{background:rgba(255,255,255,0.07);border:1px solid rgba(120,250,174,0.25);border-radius:12px;padding:1.5rem;position:relative;}
+.aic.full{grid-column:1/-1;}
+.ail{font-size:11px;font-weight:500;color:var(--el);letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+[data-theme="light"] .ail{color:#0E3A2F;}
+.aid{width:6px;height:6px;border-radius:50%;background:var(--el);flex-shrink:0;}
+[data-theme="light"] .aid{background:#0E3A2F;}
+.aic p{font-size:14px;line-height:1.75;opacity:.9;color:var(--tx);}
+.aic p+p{margin-top:.75rem;}
+.ccp{position:absolute;top:12px;right:12px;}
+.inl{list-style:none;display:flex;flex-direction:column;gap:12px;}
+.ini{display:flex;gap:12px;align-items:flex-start;}
+.inn{font-family:'Syne',sans-serif;font-weight:700;font-size:1.4rem;color:var(--el);line-height:1;flex-shrink:0;min-width:28px;}
+[data-theme="light"] .inn{color:#0E3A2F;}
+.int{font-size:14px;line-height:1.65;opacity:.9;color:var(--tx);}
+.wl{display:flex;flex-direction:column;gap:10px;}
+.wi{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:rgba(220,80,80,.14);border:1px solid rgba(220,80,80,.35);border-radius:8px;}
+.wic{color:#ff8a8a;flex-shrink:0;font-size:13px;margin-top:2px;}
+.wit{font-size:13px;line-height:1.6;opacity:.9;color:var(--tx);}
+.rl{display:flex;flex-direction:column;gap:12px;}
+.ri{display:flex;gap:10px;align-items:flex-start;}
+.ra{color:var(--el);flex-shrink:0;font-size:14px;margin-top:2px;}
+[data-theme="light"] .ra{color:#0E3A2F;}
+.rb{flex:1;}
+.rt{font-size:13px;line-height:1.65;opacity:.9;color:var(--tx);}
+.rte{font-size:11px;color:var(--el);opacity:.65;margin-top:2px;}
+[data-theme="light"] .rte{color:#0E3A2F;}
+.qg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.qc{background:rgba(255,255,255,.03);border-left:2px solid var(--el);border-radius:0 8px 8px 0;padding:12px 14px;}
+[data-theme="light"] .qc{background:rgba(14,58,47,.04);border-left-color:#0E3A2F;}
+.qt{font-size:13px;font-style:italic;line-height:1.65;opacity:.85;margin-bottom:8px;color:var(--tx);}
+.qm{font-size:11px;color:var(--txm);display:flex;gap:8px;align-items:center;}
+.ql{background:var(--el-dim);color:var(--el);padding:1px 7px;border-radius:10px;}
+[data-theme="light"] .ql{color:#0E3A2F;}
+.dr{display:flex;gap:10px;flex-wrap:wrap;margin-top:1.5rem;}
+select{background:#0e3a2f;border:1px solid var(--b);border-radius:8px;padding:10px 14px;color:#F5F7F4;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;cursor:pointer;}
+[data-theme="light"] select{background:#fff;color:#0E3A2F;border-color:rgba(14,58,47,.3);}
+@media print{nav,.hero,.stats,.main,#explorer,.dr,.rtbar,.ccp,footer{display:none !important;} .rsec{margin:0;padding:1rem 0;border:none;} body{background:#fff;color:#000;font-size:12px;} .cc,.aic{border:1px solid #ddd;break-inside:avoid;} .cgrid{grid-template-columns:1fr 1fr;}}
+@media (max-width:960px){.main{grid-template-columns:1fr;} .ml{padding:2rem 0;border-right:none;border-bottom:1px solid var(--b);} .mr{padding:2rem 0;} .cgrid,.air{grid-template-columns:1fr;} .cc.wide,.aic.full{grid-column:1;} .qg{grid-template-columns:1fr;} .stats{grid-template-columns:1fr;} .stat{border-right:none;border-bottom:1px solid var(--b);} nav{padding:1rem 1.25rem;} .hero{padding:3rem 1.25rem 2.5rem;} .stats,.main,.rsec{margin:0 1.25rem;} .tgrid{grid-template-columns:1fr;} footer{flex-direction:column;gap:6px;padding:1.5rem 1.25rem;}}
+footer{padding:2rem 2.5rem;border-top:1px solid var(--b);display:flex;justify-content:space-between;font-size:12px;color:var(--txm);}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">
+    <div class="logo-mark"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M9 3v12M5 5l8 8M13 5l-8 8" stroke="#0E3A2F" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+    Škoda <span>X</span> Research
+  </div>
+  <div class="nav-r">
+    <button class="lbtn active" id="btn-cs" onclick="setLang('cs')">CZ</button>
+    <button class="lbtn" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="tbtn" onclick="toggleTheme()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="tico"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      <span id="tlabel">Light</span>
+    </button>
+    <div class="nbadge">DEMO · v0.1</div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag">Research Intelligence Platform</div>
+  <h1>Data z internetu.<br><em>Insights pro rozhodnutí.</em></h1>
+  <p class="hero-sub">Nahraješ export ze SentiOne, platforma automaticky odfiltruje šum, klasifikuje témata a sentiment — a vrátí strukturovaný report s vizualizacemi a AI interpretací.</p>
+  <div class="hero-acts">
+    <a href="#analyzer" class="btn-p"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>Spustit analýzu</a>
+    <a href="#report" class="btn-s">Ukázka reportu</a>
+  </div>
+</section>
+
+<div class="stats" style="grid-template-columns:1fr 1fr 1fr">
+  <div class="stat"><div class="sv" id="s-mentions">—</div><div class="sl">vstupních zmínek</div></div>
+  <div class="stat"><div class="sv" id="s-relevant">—</div><div class="sl">relevantních (<span id="s-rel-pct">—</span> %)</div></div>
+  <div class="stat" style="border-right:none"><div class="sv" id="s-topics">—</div><div class="sl">témat identifikováno automaticky</div></div>
+</div>
+
+<div class="main" id="analyzer">
+  <div class="ml">
+    <div class="slabel">Nový projekt</div>
+    <div class="field">
+      <label>Typ výzkumu</label>
+      <div class="tgrid" id="type-btns">
+        <button type="button" class="tybtn" onclick="selectType('customer')">
+          <div class="chk"><svg width="10" height="10" fill="none" stroke="#0E3A2F" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="tyn">Customer Insight</div>
+          <div class="tyk">Pain points · potřeby · sentiment</div>
+          <div class="tyd">Co zákazníci řeší, co jim chybí. Výstup: report s pain points, citacemi a doporučeními.</div>
+        </button>
+        <button type="button" class="tybtn" onclick="selectType('market')">
+          <div class="chk"><svg width="10" height="10" fill="none" stroke="#0E3A2F" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="tyn">Market &amp; Trend</div>
+          <div class="tyk">Trendy · trh · kategorie</div>
+          <div class="tyd">Kam kategorie směřuje, co roste. Výstup: trendová analýza s grafem vývoje.</div>
+        </button>
+        <button type="button" class="tybtn" onclick="selectType('competitive')">
+          <div class="chk"><svg width="10" height="10" fill="none" stroke="#0E3A2F" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="tyn">Competitive</div>
+          <div class="tyk">Share of voice · srovnání · slabiny</div>
+          <div class="tyd">Jak mluví lidé o nás vs. konkurenci. Výstup: srovnávací tabulka a příležitosti.</div>
+        </button>
+        <button type="button" class="tybtn" onclick="selectType('campaign')">
+          <div class="chk"><svg width="10" height="10" fill="none" stroke="#0E3A2F" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="tyn">Campaign Prep</div>
+          <div class="tyk">Validace · rizika · messaging</div>
+          <div class="tyd">Co vědět před kampaní. Výstup: briefing s motivátory, bariérami a doporučením jazyka.</div>
+        </button>
+      </div>
+    </div>
+    <div class="field"><label>Název projektu</label><input type="text" id="proj-name" placeholder="např. Doplňky do aut — Q1 2025"></div>
+    <div class="field"><label>Téma výzkumu</label><input type="text" id="proj-topic" placeholder="např. doplňky do aut"></div>
+    <div class="field">
+      <label style="display:flex;justify-content:space-between">
+        <span>Taxonomie témat</span>
+        <span id="tax-hint" style="font-size:11px;color:var(--el);opacity:.8"></span>
+      </label>
+      <textarea id="proj-tax" placeholder="Vyber typ výzkumu výše — taxonomie se předvyplní automaticky" style="min-height:120px"></textarea>
+    </div>
+    <div class="field">
+      <label style="display:flex;justify-content:space-between;align-items:center">
+        <span>Kritéria relevance</span>
+        <span style="font-size:11px;color:var(--txm)">AI filtruje dle těchto kritérií</span>
+      </label>
+      <textarea id="proj-relevance" placeholder="Vyber typ výzkumu výše — kritéria se předvyplní automaticky (editovatelná)" style="min-height:100px"></textarea>
+    </div>
+    <div class="slabel" style="margin-top:1.5rem">Nahrát data</div>
+    <div class="upz" id="upz">
+      <input type="file" accept=".csv,.xlsx,.xls" onchange="handleFile(this)">
+      <div class="upi"><svg width="22" height="22" fill="none" stroke="#78FAAE" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 16V8m0 0l-3 3m3-3l3 3M6 20h12a2 2 0 002-2V8a2 2 0 00-.586-1.414l-4-4A2 2 0 0013 2H6a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="upt" id="upt">Přetáhni CSV nebo Excel nebo klikni pro výběr</div>
+      <div class="ups">Export ze SentiOne · max 50 MB</div>
+    </div>
+    <div style="margin-bottom:1rem"><div class="slabel" style="margin-bottom:6px">Anthropic API klíč</div><input type="password" id="api-key-input" placeholder="sk-ant-..." oninput="saveApiKey(this.value)" style="width:100%;background:var(--bg2);border:1.5px solid var(--b);border-radius:8px;padding:8px 12px;color:var(--tx);font-size:13px;font-family:monospace;box-sizing:border-box"><div id="api-key-status" style="font-size:11px;color:var(--txm);margin-top:4px"> </div></div>
+    <button class="btn-s" id="stop-btn" onclick="stopAnalysis()" style="display:none;margin-right:8px">⏹ Zastavit</button>
+    <button class="btn-p run-btn" onclick="runDemo()">
+      <svg class="btext" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span class="btext">Spustit analýzu</span>
+      <div class="spinner"></div>
+    </button>
+  </div>
+  <div class="mr">
+    <div class="slabel">Průběh analýzy</div>
+    <div class="ppanel">
+      <div class="ptitle" id="ptitle">Připraveno ke spuštění</div>
+      <div class="pbw"><div class="pbf" id="pbar"></div></div>
+      <div class="pmeta"><span id="ptxt">0 záznamů zpracováno</span><span id="ppct">0 %</span></div>
+      <div class="pstep"><div class="sdot spend" id="d1">1</div><div class="stxt">Načtení a validace CSV</div><div class="scnt" id="c1"></div></div>
+      <div class="pstep"><div class="sdot spend" id="d2">2</div><div class="stxt">Filtrování relevance (AI)</div><div class="scnt" id="c2"></div></div>
+      <div class="pstep"><div class="sdot spend" id="d3">3</div><div class="stxt">Klasifikace témat a intentu</div><div class="scnt" id="c3"></div></div>
+      <div class="pstep"><div class="sdot spend" id="d4">4</div><div class="stxt">Generování pivot souhrnu</div><div class="scnt" id="c4"></div></div>
+      <div class="pstep"><div class="sdot spend" id="d5">5</div><div class="stxt">AI interpretace a report</div><div class="scnt" id="c5"></div></div>
+    </div>
+    <div class="dnote"><strong>Produkční verze</strong>Zadej API klíč výše a nahraj export ze SentiOne. Analýza probíhá přímo v prohlížeči.</div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div class="rsec" id="report">
+  <div class="print-header" style="display:none;padding:0 0 1rem;border-bottom:4px solid #0E3A2F;margin-bottom:1.5rem">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <div style="font-size:9pt;color:#0E3A2F;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Škoda X Research Intelligence</div>
+        <div style="font-size:8pt;color:#777">Interní výzkumný report · Důvěrné</div>
+      </div>
+      <div style="font-size:8pt;color:#777;text-align:right" id="print-date"></div>
+    </div>
+  </div>
+  <div class="rhdr">
+    <div class="slabel">Výstupní report</div>
+    <h2 id="report-title"> </h2>
+    <div class="rmeta" id="report-meta"><span id="rdate"></span></div>
+  </div>
+  <div class="rtbar">
+    <div class="rtbar-l">
+      <button class="vbtn active" onclick="setView('report',this)">Report</button>
+      <button class="vbtn" onclick="setView('raw',this)">Surová data</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-i" onclick="copyReport()"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Kopírovat shrnutí</button>
+      <button class="btn-i" id="pdf-btn" onclick="downloadPDF()"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Stáhnout PDF</button>
+      <button class="btn-i" onclick="alert('Demo — export dostupný s API klíčem.')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16"/></svg>CSV</button>
+      <button class="btn-i" onclick="alert('Demo — export dostupný s API klíčem.')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Excel</button>
+    </div>
+  </div>
+
+  <!-- REPORT VIEW -->
+  <div id="view-report">
+    <div class="cgrid" id="chart-grid"></div>
+    <div class="slabel" id="table-label">Přehled témat</div>
+    <div class="tw"><table id="pivot-table"><thead id="pivot-head"></thead><tbody id="pivot-body"></tbody></table></div>
+    <div id="sov-note" style="display:none;font-size:12px;color:var(--txm);margin-top:8px;margin-bottom:1.5rem;padding:10px 14px;background:var(--el-dim);border-radius:8px;border-left:3px solid var(--el)">
+      <strong style="color:var(--el)">* Share of voice</strong> — podíl na celkovém objemu zmínek v kategorii. Značka s nejvyšším počtem zmínek má 100 %, ostatní jsou vyjádřeny relativně. Příklad: naše značka má 680 zmínek (= 100 %), Kooperativa 590 (= 87 % z 680). Nevyjadřuje tržní podíl, ale viditelnost v online konverzacích.
+    </div>
+    <div class="slabel">AI interpretace</div>
+    <div class="air" id="ai-cards"></div>
+    <div class="dr">
+      <button class="btn-p" onclick="alert('Demo — dostupné s API klíčem.')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16"/></svg>Stáhnout CSV</button>
+      <button class="btn-s" onclick="alert('Demo — dostupné s API klíčem.')">Pivot Excel</button>
+      <button class="btn-s" onclick="alert('Demo — dostupné s API klíčem.')">Exportovat PDF</button>
+    </div>
+  </div>
+
+  <!-- RAW DATA VIEW -->
+  <div id="view-raw" style="display:none">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+      <input type="text" id="esearch" placeholder="Hledat v textu..." style="flex:1;min-width:200px" oninput="filterEx()">
+      <select id="ftopic" onchange="filterEx()"><option value="">Všechna témata</option></select>
+      <select id="fsent" onchange="filterEx()"><option value="">Všechny sentimenty</option><option>negativní</option><option>ambivalentní</option><option>neutrální</option><option>pozitivní</option></select>
+      <select id="flang" onchange="filterEx()"><option value="">Všechny jazyky</option><option>CZ</option><option>EN</option><option>DE</option></select>
+      <select id="fintent" onchange="filterEx()"><option value="">Všechny intenty</option><option>hledá radu</option><option>zvažuje nákup</option><option>stěžuje si</option><option>doporučuje</option><option>porovnává</option><option>varuje</option><option>sdílí zkušenost</option></select>
+      <button class="btn-s" style="padding:10px 14px;font-size:13px" onclick="resetEx()">Reset</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:12px;color:var(--txm)"><span id="ex-count"></span></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:12px;color:var(--txm)">Relevance:</span>
+        <button class="vbtn active" id="rel-all" onclick="setRelFilter('all',this)" style="font-size:11px;padding:4px 10px">Vše</button>
+        <button class="vbtn" id="rel-yes" onclick="setRelFilter('yes',this)" style="font-size:11px;padding:4px 10px">Relevantní</button>
+        <button class="vbtn" id="rel-no" onclick="setRelFilter('no',this)" style="font-size:11px;padding:4px 10px">Nerelevantní</button>
+      </div>
+    </div>
+    <div id="ex-cards" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="ex-empty" style="display:none;text-align:center;padding:3rem;color:var(--txm);font-size:14px">Žádné záznamy neodpovídají filtrům.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.25rem;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;color:var(--txm)" id="ex-pginfo"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-s" style="padding:8px 16px;font-size:13px" id="btn-prev" onclick="changePg(-1)">← Předchozí</button>
+        <button class="btn-s" style="padding:8px 16px;font-size:13px" id="btn-next" onclick="changePg(1)">Další →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(5,20,15,.85);z-index:200;align-items:center;justify-content:center;padding:1.5rem">
+  <div style="background:var(--bg);border:1px solid var(--b);border-radius:16px;padding:2rem;max-width:600px;width:100%;position:relative;max-height:90vh;overflow-y:auto">
+    <button onclick="document.getElementById('modal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.08);border:none;color:var(--tx);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<footer>
+  <div>Škoda X Research Intelligence · Demo verze</div>
+  <div>Vyžaduje Anthropic API klíč pro ostrý provoz</div>
+</footer>
+
+<!-- App scripts -->
+<script>
+// ── DATE ──
+document.getElementById('rdate').textContent = new Date().toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'});
+const pd=document.getElementById('print-date');
+if(pd) pd.textContent='Vygenerováno: '+new Date().toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'});
+
+// ── THEME ──
+function toggleTheme(){
+  const d=document.documentElement,dark=d.getAttribute('data-theme')==='dark';
+  d.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('tlabel').textContent=dark?'Dark':'Light';
+  document.getElementById('tico').innerHTML=dark?'<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>':'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+  setTimeout(updateChartDefaults,50);
+}
+
+// ── LANG ──
+let lang='cs';
+const TEXTS={
+  cs:{heroTag:'Research Intelligence Platform',heroH1:'Data z internetu.<br><em>Insights pro rozhodnutí.</em>',heroSub:'Nahraješ export ze SentiOne, platforma automaticky odfiltruje šum, klasifikuje témata a sentiment — a vrátí strukturovaný report s vizualizacemi a AI interpretací.',btnRun:'Spustit analýzu',btnDemo:'Ukázka reportu',slNovy:'Nový projekt',slTyp:'Typ výzkumu',lNazev:'Název projektu',lTema:'Téma výzkumu',lTax:'Taxonomie témat',slData:'Nahrát data',uptDefault:'Přetáhni CSV nebo Excel nebo klikni pro výběr',slPrubeh:'Průběh analýzy',ptitleDefault:'Připraveno ke spuštění',dnoteTitle:'Pro ostrý provoz',dnoteBody:'Tato verze je demo. Reálná analýza vyžaduje Anthropic API klíč.',vReport:'Report',vRaw:'Surová data',btnCopy:'Kopírovat shrnutí',btnPrint:'Tisk / PDF'},
+  en:{heroTag:'Research Intelligence Platform',heroH1:'Data from the internet.<br><em>Insights for decisions.</em>',heroSub:'Upload your SentiOne export, the platform automatically filters noise, classifies topics and sentiment — and returns a structured report with visualisations and AI interpretation.',btnRun:'Run analysis',btnDemo:'Sample report',slNovy:'New project',slTyp:'Research type',lNazev:'Project name',lTema:'Research topic',lTax:'Topic taxonomy',slData:'Upload data',uptDefault:'Drag CSV or click to select',slPrubeh:'Analysis progress',ptitleDefault:'Ready to run',dnoteTitle:'For live operation',dnoteBody:'This is a demo version. Processing real data requires an Anthropic API key.',vReport:'Report',vRaw:'Raw data',btnCopy:'Copy summary',btnPrint:'Print / PDF'}
+};
+function setLang(l){
+  lang=l;
+  document.getElementById('btn-cs').classList.toggle('active',l==='cs');
+  document.getElementById('btn-en').classList.toggle('active',l==='en');
+  const T=TEXTS[l];
+  // Hero
+  document.querySelector('.hero-tag').textContent=T.heroTag;
+  document.querySelector('h1').innerHTML=T.heroH1;
+  document.querySelector('.hero-sub').textContent=T.heroSub;
+  document.querySelector('a[href="#analyzer"]').innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>'+T.btnRun;
+  document.querySelector('a[href="#report"]').textContent=T.btnDemo;
+  // Form labels
+  const FL={
+    cs:{typeLabel:'Typ výzkumu',nameLabel:'Název projektu',topicLabel:'Téma výzkumu',taxLabel:'Taxonomie témat',relLabel:'Kritéria relevance',relHint:'AI filtruje dle těchto kritérií',dataLabel:'Nahrát data',runBtn:'Spustit analýzu',progLabel:'Průběh analýzy',dnoteTitle:'Pro ostrý provoz',dnoteBody:'Tato verze je demo. Reálná analýza vyžaduje Anthropic API klíč.',vReport:'Report',vRaw:'Surová data',copySumm:'Kopírovat shrnutí',printBtn:'Tisk / PDF'},
+    en:{typeLabel:'Research type',nameLabel:'Project name',topicLabel:'Research topic',taxLabel:'Topic taxonomy',relLabel:'Relevance criteria',relHint:'AI filters based on these criteria',dataLabel:'Upload data',runBtn:'Run analysis',progLabel:'Analysis progress',dnoteTitle:'For live operation',dnoteBody:'This is a demo. Real analysis requires an Anthropic API key.',vReport:'Report',vRaw:'Raw data',copySumm:'Copy summary',printBtn:'Print / PDF'},
+  };
+  const fl=FL[l]||FL.cs;
+  // Update all labels
+  const ql=id=>document.getElementById(id);
+  const setTxt=(el,t)=>{if(el)el.textContent=t;};
+  // Sections
+  document.querySelectorAll('.slabel').forEach((el,i)=>{
+    const labels=l==='en'?['New project','Analysis progress']:['Nový projekt','Průběh analýzy'];
+    // match by content
+  });
+  // Type buttons descriptions
+  const typeDescs={
+    cs:{customer:'Co zákazníci řeší, co jim chybí. Výstup: report s pain points, citacemi a doporučeními.',market:'Kam kategorie směřuje, co roste. Výstup: trendová analýza s grafem vývoje.',competitive:'Jak mluví lidé o nás vs. konkurenci. Výstup: srovnávací tabulka a příležitosti.',campaign:'Co vědět před kampaní. Výstup: briefing s motivátory, bariérami a doporučením jazyka.'},
+    en:{customer:'What customers struggle with and need. Output: report with pain points, quotes and recommendations.',market:'Where the category is heading. Output: trend analysis with development chart.',competitive:'How people talk about us vs. competitors. Output: comparative table and opportunities.',campaign:'What to know before launching. Output: briefing with motivators, barriers and language guidance.'},
+  };
+  document.querySelectorAll('.tyd').forEach(function(el,i){var types=['customer','market','competitive','campaign'];var t=types[i];if(t&&typeDescs[l][t])el.textContent=typeDescs[l][t];});
+  // Form field labels
+  document.querySelectorAll('label').forEach(lbl=>{
+    const txt=lbl.querySelector('span:first-child');
+    const map={cs:{'Typ výzkumu':'Typ výzkumu','Název projektu':'Název projektu','Téma výzkumu':'Téma výzkumu','Taxonomie témat':'Taxonomie témat','Kritéria relevance':'Kritéria relevance','Nahrát data':'Nahrát data'},
+               en:{'Typ výzkumu':'Research type','Název projektu':'Project name','Téma výzkumu':'Research topic','Taxonomie témat':'Topic taxonomy','Kritéria relevance':'Relevance criteria','Nahrát data':'Upload data'}};
+    if(txt){const t=map[l][txt.textContent];if(t)txt.textContent=t;}
+    else{
+      const csMap={'Typ výzkumu':'Research type','Název projektu':'Project name','Téma výzkumu':'Research topic','Taxonomie témat':'Topic taxonomy','Kritéria relevance':'Relevance criteria'};
+      const enMap={'Research type':'Typ výzkumu','Project name':'Název projektu','Research topic':'Téma výzkumu','Topic taxonomy':'Taxonomie témat','Relevance criteria':'Kritéria relevance'};
+      if(l==='en'&&csMap[lbl.textContent]) lbl.textContent=csMap[lbl.textContent];
+      if(l==='cs'&&enMap[lbl.textContent]) lbl.textContent=enMap[lbl.textContent];
+    }
+  });
+  // Hint spans on relevance label
+  document.querySelectorAll('[style*="font-size:11px"][style*="color:var(--txm)"]').forEach(el=>{
+    if(el.textContent==='AI filtruje dle těchto kritérií'||el.textContent==='AI filters based on these criteria')
+      el.textContent=l==='en'?'AI filters based on these criteria':'AI filtruje dle těchto kritérií';
+  });
+  // Placeholders
+  const pmap={cs:{'Project name':'např. Doplňky do aut — Q1 2025','Research topic':'např. doplňky do aut','Select a research type above':'Vyber typ výzkumu výše — taxonomie se předvyplní automaticky (editovatelná)'},
+              en:{'např. Doplňky do aut — Q1 2025':'e.g. Car accessories — Q1 2025','např. doplňky do aut':'e.g. car accessories','Vyber typ výzkumu výše — taxonomie se předvyplní automaticky (editovatelná)':'Select a research type above — taxonomy will be prefilled automatically (editable)'}};
+  document.querySelectorAll('input[type=text],textarea').forEach(el=>{
+    const t=pmap[l][el.placeholder];if(t)el.placeholder=t;
+  });
+  // Upload text
+  const ut=document.getElementById('upt');
+  if(ut&&(ut.textContent==='Přetáhni CSV nebo Excel nebo klikni pro výběr'||ut.textContent==='Drag CSV or click to select'))
+    ut.textContent=l==='en'?'Drag CSV or click to select':'Přetáhni CSV nebo Excel nebo klikni pro výběr';
+  // Run button
+  const rb=document.querySelector('.run-btn .btext:last-of-type');
+  if(rb) rb.textContent=l==='en'?'Run analysis':'Spustit analýzu';
+  // View buttons
+  document.querySelectorAll('.vbtn').forEach(btn=>{
+    if(btn.textContent==='Report'||btn.textContent==='Report') return;
+    const vm={cs:{'Raw data':'Surová data','Surová data':'Surová data'},en:{'Surová data':'Raw data','Raw data':'Raw data'}};
+    const t=vm[l][btn.textContent];if(t)btn.textContent=t;
+  });
+  // Toolbar buttons
+  document.querySelectorAll('.btn-i').forEach(btn=>{
+    const bm={cs:{'Copy summary':'Kopírovat shrnutí','Print / PDF':'Tisk / PDF','Download CSV':'Stáhnout CSV'},
+              en:{'Kopírovat shrnutí':'Copy summary','Tisk / PDF':'Print / PDF','Stáhnout CSV':'Download CSV'}};
+    const t=bm[l][btn.textContent.trim()];if(t)btn.textContent=t;
+  });
+  // Demo note
+  const dn=document.querySelector('.dnote strong');
+  if(dn) dn.textContent=l==='en'?'For live operation':'Pro ostrý provoz';
+  const dnb=document.querySelector('.dnote');
+  if(dnb){const tnode=dnb.childNodes[dnb.childNodes.length-1];if(tnode&&tnode.nodeType===3)tnode.textContent=l==='en'?' This is a demo. Real analysis requires an Anthropic API key.':' Tato verze je demo. Reálná analýza vyžaduje Anthropic API klíč.';}
+  // Tax hint
+  const D=DEMO[currentType];
+  if(D){
+    document.getElementById('report-title').textContent=l==='en'?D.titleEN:D.title;
+    document.getElementById('report-meta').innerHTML=(l==='en'?D.metaEN:D.meta)+' · <span id="rdate"></span>';
+    document.getElementById('rdate').textContent=new Date().toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'});
+    if(!window._realDataLoaded) renderAICards(D,l);
+  }
+}
+
+// ── VIEW TOGGLE ──
+function setView(v,btn){
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-report').style.display=v==='report'?'block':'none';
+  document.getElementById('view-raw').style.display=v==='raw'?'block':'none';
+  if(v==='raw') renderEx();
+}
+
+// ── TAXONOMIES ──
+const TAX={
+  customer:{label:'Customer Insight · 3–5 dní',relevance:'PODMÍNKA: záznam musí být v přímé nebo nepřímé souvislosti se Škodou Auto, jejími produkty nebo zákazníky.\n\nRELEVANTNÍ: přímá zmínka o konkrétním produktu Škoda, instalaci, zkušenosti s nákupem, srovnání produktů Škoda, dotaz na funkčnost.\nNERELEVANTNÍ: obecné zmínky o jiných značkách bez souvislosti se Škodou, reklamy, nabídky prodeje, spam, off-topic konverzace.',topics:'potíže s montáží a instalací\nkvalita a trvanlivost produktu\ncena vs. očekávání\nchybějící funkce nebo vlastnosti\nzákaznický servis a podpora\ndoporučení a pozitivní zkušenosti\nostatní'},
+  market:{label:'Market & Trend · 3–5 dní',relevance:'PODMÍNKA: záznam musí být v přímé nebo nepřímé souvislosti se Škodou Auto nebo relevantní pro trh kde Škoda působí.\n\nRELEVANTNÍ: zmínky o trendech v kategorii relevantních pro Škodu, reakce na produkty Škoda, srovnání trhu, komentáře k novinkám.\nNERELEVANTNÍ: osobní inzeráty, spam, reklamní obsah, zmínky bez vztahu ke Škodě nebo jejímu trhu.',topics:'nové technologie a inovace\ncenový tlak a dostupnost\nudržitelnost a ekologie\nchování při nákupu\nsezónní vzorce a vlny zájmu\nnová témata a emerging trends\nostatní'},
+  competitive:{label:'Competitive · 5–7 dní',relevance:'PODMÍNKA: záznam musí jmenovat Škodu nebo sledovanou konkurenci v kontextu zákaznické zkušenosti nebo hodnocení.\n\nRELEVANTNÍ: přímé zmínky o Škodě nebo sledované konkurenci, srovnání značek, zkušenosti zákazníků, hodnocení produktů nebo servisu.\nNERELEVANTNÍ: obecné zmínky bez jmenování značky, reklamy, pracovní inzeráty, spam.',topics:'náš produkt / značka\nkonkurent A\nkonkurent B\nkonkurent C\ncenové srovnání\nkvalitativní srovnání\nservis a zákaznická zkušenost'},
+  campaign:{label:'Campaign Prep · 5–7 dní',relevance:'PODMÍNKA: záznam musí být v přímé nebo nepřímé souvislosti se Škodou Auto nebo jejími zákazníky.\n\nRELEVANTNÍ: zmínky o nákupních motivacích produktů Škoda, bariérách před nákupem, reakce na kampaně Škoda, jazyk zákazníků Škody při popisu potřeby.\nNERELEVANTNÍ: zmínky bez nákupního kontextu, spam, reklamy, off-topic obsah.',topics:'povědomí o produktu / tématu\nasociace se značkou\nobavy a bariéry před nákupem\nnákupní motivátory\njazyk a fráze zákazníků\nrizika a negativní konotace\npříležitosti pro messaging'}
+};
+
+// ── DEMO DATA per type ──
+const DEMO={
+  customer:{
+    title:'Doplňky do aut — Customer Insight',titleEN:'Car accessories — Customer Insight',
+    meta:'90 dní · 4 200 vstupních záznamů · 1 840 relevantních · CZ / EN / DE',
+    metaEN:'90 days · 4,200 input records · 1,840 relevant · CZ / EN / DE',
+    stats:{mentions:'4 200',topics:'7',time:'3–5 dní'},
+    sent:[62,21,17],sentL:['Negativní','Neutrální','Pozitivní'],
+    intent:[38,24,16,11,7,4],intentL:['Hledá radu','Stěžuje si','Doporučuje','Porovnává','Varuje','Ostatní'],
+    topics:{labels:['Montáž a instalace','Kvalita a trvanlivost','Cena a hodnota','Držák telefonu','Autorádio / audio','Čistění a péče','Bezpečnostní doplňky'],data:[423,368,313,276,221,129,110],colors:['rgba(220,80,80,.6)','rgba(220,80,80,.5)','rgba(180,180,100,.5)','rgba(120,250,174,.65)','rgba(180,180,100,.45)','rgba(120,250,174,.45)','rgba(220,80,80,.45)']},
+    trend:{cz:[82,78,91,88,95,102,110,118,125,132,141,148],en:[42,45,41,48,52,55,58,62,65,70,72,78],de:[18,20,22,21,25,28,30,32,35,38,40,44]},
+    lang:[62,23,15],
+    sources:{labels:['Diskuzní fóra','Recenze (e-shop)','Sociální sítě','Blogy / weby','Ostatní'],data:[38,28,18,11,5],colors:['rgba(120,250,174,.75)','rgba(120,200,250,.65)','rgba(180,180,100,.65)','rgba(220,140,80,.6)','rgba(160,160,160,.5)']},
+    extra:{type:'bar',stacked:true,labels:['Montáž','Kvalita','Cena','Držák','Audio','Péče','Bezpečnost'],datasets:[{label:'Neg %',data:[68,74,32,18,38,14,71],color:'rgba(220,80,80,.6)'},{label:'Neu %',data:[22,16,46,22,44,20,18],color:'rgba(120,130,120,.45)'},{label:'Pos %',data:[10,10,22,60,18,66,11],color:'rgba(120,250,174,.6)'}]},
+    extraTitle:'Sentiment podle tématu',tableLabel:'Přehled témat',
+    tableHead:['Téma','Zmínky','Podíl','Sentiment','Top intent'],
+    tableRows:[['Montáž a instalace',423,100,'negativní','hledá radu'],['Kvalita a trvanlivost',368,87,'negativní','stěžuje si'],['Cena a hodnota',313,74,'neutrální','porovnává'],['Držák telefonu',276,65,'pozitivní','doporučuje'],['Autorádio / audio',221,52,'neutrální','hledá radu'],['Čistění a péče',129,30,'pozitivní','doporučuje'],['Bezpečnostní doplňky',110,26,'negativní','varuje']],
+    subtopics:{
+      'Montáž a instalace':[
+        {label:'Chybějící CZ/DE návod',count:165,pct:39,eval:'kritické',quotes:['„Návod jen německy, žádné fotky — k ničemu."','„Installation instructions completely unclear, no Czech manual."']},
+        {label:'Délka montáže vs. slib',count:128,pct:30,eval:'negativní',quotes:['„Trvalo 3 hodiny místo slibovaných 30 minut."','„Took way longer than advertised. Very frustrating."']},
+        {label:'Kompatibilita s modelem auta',count:95,pct:22,eval:'negativní',quotes:['„Kabeláž vůbec nepasuje na Golfa 7."','„Does this fit Octavia III? Listing is unclear."']},
+        {label:'Úspěšná montáž — pozitivní',count:35,pct:9,eval:'pozitivní',quotes:['„Zvládl jsem sám za 20 minut, návod na YouTube pomohl."','„Easy install, took 15 minutes."']},
+      ],
+      'Kvalita a trvanlivost':[
+        {label:'Rozpad do 30 dnů',count:198,pct:54,eval:'kritické',quotes:['„Po měsíci se rozpadlo. Nekupujte."','„Broke after 3 weeks. Terrible quality for the price."']},
+        {label:'Materiál — plastová křehkost',count:112,pct:30,eval:'negativní',quotes:['„Plastová část praskla při první instalaci."','„Feels very cheap and flimsy."']},
+        {label:'Pozitivní — dlouhá životnost',count:58,pct:16,eval:'pozitivní',quotes:['„Druhý kus — první vydržel 4 roky bez problémů."','„Still working perfectly after 2 years."']},
+      ],
+      'Držák telefonu':[
+        {label:'Stabilita při jízdě',count:156,pct:57,eval:'pozitivní',quotes:['„Drží pevně i na výmolech, žádné vibrace."','„Holds perfectly even on rough roads."']},
+        {label:'Snadná montáž / demontáž',count:78,pct:28,eval:'pozitivní',quotes:['„Magnetické uchycení je geniální — jednou rukou."','„One-hand operation, brilliant design."']},
+        {label:'Kompatibilita s pouzdrem',count:42,pct:15,eval:'neutrální',quotes:['„S tlustým pouzdrem drží hůř."','„Does not work well with thick phone cases."']},
+      ],
+    },
+    ai:{
+      cs:{summary:'Analýza 1 840 relevantních zmínek za 90 dní ukazuje dominantní negativní sentiment (62 %). Největší pain point je montáž — 38 % zákazníků hledá radu jak nainstalovat produkty, chybí lokalizované návody v CZ a DE. Jediná pozitivně hodnocená kategorie jsou držáky telefonů.',summary2:'Německý segment (15 %) je výrazně kritičtější k poměru ceny a kvality. Trend zmínek roste o 34 % za posledních 6 týdnů.',insights:['Montáž je největší pain point — 38 % zákazníků hledá radu. Chybí lokalizované návody CZ / DE.','Držáky telefonů mají čistě pozitivní sentiment — příležitost pro aktivní marketingovou komunikaci.','Trend +34 % za 6 týdnů — kategorie doplňků do aut nabývá na relevanci.'],warnings:['Bezpečnostní doplňky: 71 % zmínek varuje před poruchami. Reputační riziko.','Kvalita: rostoucí zmínky o produktech rozpadajících se do 30 dnů — zmíněny 3 SKU.','DE segment: výrazně vyšší negativní sentiment — potenciální problém s distribucí.'],recs:[['Vytvořit video návody k montáži pro top 5 produktů v CZ / EN / DE.','Marketing / Obsah'],['Spustit kampaň na držáky telefonů — zákazníci je doporučují, posílit word-of-mouth.','Performance marketing'],['Prověřit kvalitu bezpečnostních doplňků u dodavatele.','Produkt / Nákup'],['Analyzovat DE distribuci — nespokojenost může pramenit z cen nebo sortimentu.','Strategie']],quotes:[['„Jak namontovat parkovací senzor do Fabie? Návod k ničemu."','CZ','Fórum · montáž'],['„Best phone mount ever. Bought three more for family."','EN','Review · mount'],['„Qualität enttäuschend. Nach 3 Wochen kaputt."','DE','Recenze · kvalita'],['„Zpětná kamera se zamlžuje — reklamace podána."','CZ','Mall.cz · bezpečnost'],['„Nejlepší vosk co jsem zkoušel. Doporučuji."','CZ','Blog · péče'],['„Does it support CarPlay on older Octavia?"','EN','Reddit · audio']]},
+      en:{summary:'Analysis of 1,840 relevant mentions over 90 days shows dominant negative sentiment (62%). The biggest pain point is installation — 38% of customers are seeking advice, with localised guides missing in CZ and DE. The only positively rated category is phone mounts.',summary2:'The German segment (15%) is notably more critical of price-to-quality ratio. Mention trends are up 34% over the past 6 weeks.',insights:['Installation is the biggest pain point — 38% seeking advice. Localised guides missing for CZ/DE.','Phone mounts have purely positive sentiment — an opportunity for active marketing.','Trend +34% over 6 weeks — car accessories category is gaining relevance.'],warnings:['Safety accessories: 71% of mentions warn of failures. Reputational risk.','Quality: growing mentions of products falling apart within 30 days — 3 SKUs mentioned.','DE segment: significantly higher negative sentiment — potential distribution issue.'],recs:[['Create video installation guides for top 5 products in CZ / EN / DE.','Marketing / Content'],['Launch a phone mount campaign — customers recommend them.','Performance marketing'],['Review safety accessory quality with the supplier.','Product / Procurement'],['Analyse DE distribution — dissatisfaction may stem from pricing.','Strategy']],quotes:[['„Jak namontovat parkovací senzor do Fabie? Návod k ničemu."','CZ','Forum · installation'],['„Best phone mount ever. Bought three more for family."','EN','Review · mount'],['„Qualität enttäuschend. Nach 3 Wochen kaputt."','DE','Review · quality'],['„Zpětná kamera se zamlžuje — reklamace podána."','CZ','Mall.cz · safety'],['„Nejlepší vosk co jsem zkoušel. Doporučuji."','CZ','Blog · care'],['„Does it support CarPlay on older Octavia?"','EN','Reddit · audio']]}
+    },
+    records:[{id:1,text:'Jak namontovat parkovací senzor do starší Fabie? Návod v krabičce je k ničemu.',topic:'Montáž a instalace',sentiment:'negativní',intent:'hledá radu',lang:'CZ',source:'auto.cz',date:'2025-03-18',author:'jarda_mk',interactions:12,entities:'parkovací senzor'},{id:2,text:"Best phone mount I have ever used. Holds perfectly even on rough roads.",topic:'Držák telefonu',sentiment:'pozitivní',intent:'doporučuje',lang:'EN',source:'Heureka',date:'2025-03-17',author:'martin_k',interactions:8,entities:'phone mount'},{id:3,text:'Qualität enttäuschend — nach 3 Wochen schon kaputt.',topic:'Kvalita a trvanlivost',sentiment:'negativní',intent:'stěžuje si',lang:'DE',source:'Amazon.de',date:'2025-03-16',author:'Hans_W',interactions:24,entities:''},{id:4,text:'Zpětná kamera se zamlžuje při dešti. Reklamace podána.',topic:'Bezpečnostní doplňky',sentiment:'negativní',intent:'varuje',lang:'CZ',source:'Mall.cz',date:'2025-03-15',author:'petr_n',interactions:31,entities:'zpětná kamera'},{id:5,text:'Nejlepší vosk co jsem zkoušel. Auto jako nové.',topic:'Čistění a péče',sentiment:'pozitivní',intent:'doporučuje',lang:'CZ',source:'autoforum.cz',date:'2025-03-14',author:'laka_pro',interactions:45,entities:'vosk'},{id:6,text:"Does this head unit support Apple CarPlay on Octavia III?",topic:'Autorádio / audio',sentiment:'neutrální',intent:'hledá radu',lang:'EN',source:'Reddit',date:'2025-03-14',author:'Ondra_CZ',interactions:6,entities:'CarPlay'},{id:7,text:'Za tu cenu ok, ale montáž trvala 2 hodiny místo 30 minut.',topic:'Cena a hodnota',sentiment:'neutrální',intent:'porovnává',lang:'CZ',source:'Zbozi.cz',date:'2025-03-13',author:'tomas_b',interactions:3,entities:''},{id:8,text:'Dash cam stopped recording after one week.',topic:'Bezpečnostní doplňky',sentiment:'negativní',intent:'varuje',lang:'EN',source:'Amazon.co.uk',date:'2025-03-13',author:'CarGuy99',interactions:18,entities:'dash cam'},{id:9,relevant:false,text:'Kabeláž k autorádivu nepasuje na Golfa 7.',topic:'Autorádio / audio',sentiment:'negativní',intent:'stěžuje si',lang:'CZ',source:'Alza.cz',date:'2025-03-12',author:'jiri_p',interactions:9,entities:'Golf 7'},{id:10,relevant:false,text:'Super Halterung, hält bei Vollbremsung perfekt.',topic:'Držák telefonu',sentiment:'pozitivní',intent:'doporučuje',lang:'DE',source:'Otto.de',date:'2025-03-12',author:'Klaus_M',interactions:7,entities:'Halterung'}]
+  },
+  market:{
+    title:'Elektromobilita — Market & Trend',titleEN:'Electric mobility — Market & Trend',
+    meta:'180 dní · 8 500 vstupních záznamů · 3 200 relevantních · CZ / EN / DE',
+    metaEN:'180 days · 8,500 input records · 3,200 relevant · CZ / EN / DE',
+    stats:{mentions:'8 500',topics:'6',time:'3–5 dní'},
+    sent:[41,35,24],sentL:['Negativní','Neutrální','Pozitivní'],
+    intent:[29,18,22,19,8,4],intentL:['Diskutuje','Hledá radu','Doporučuje','Porovnává','Kritizuje','Ostatní'],
+    topics:{labels:['Dobíjení a infrastruktura','Dojezd baterie','Cena a dostupnost','Jízdní vlastnosti','Servis a záruka','Ekologie a udržitelnost'],data:[890,720,640,480,280,190],colors:['rgba(220,80,80,.6)','rgba(220,80,80,.5)','rgba(180,180,100,.55)','rgba(120,250,174,.65)','rgba(180,180,100,.45)','rgba(120,250,174,.5)']},
+    trend:{cz:[120,130,145,160,170,195,210,230,250,280,310,340],en:[80,90,95,110,120,140,155,170,190,210,240,270],de:[60,65,70,80,90,100,115,130,150,170,195,220],sentNeg:[38,40,42,43,45,44,46,47,48,50,52,54],sentPos:[28,27,26,25,24,25,23,22,22,21,20,19]},
+    lang:[42,31,27],
+    sources:{labels:['Diskuzní fóra','Sociální sítě','Blogy / weby','Recenze (e-shop)','Ostatní'],data:[31,29,22,12,6],colors:['rgba(120,250,174,.75)','rgba(120,200,250,.65)','rgba(180,180,100,.65)','rgba(220,140,80,.6)','rgba(160,160,160,.5)']},
+    extra:{type:'growth',labels:['Ekologie a udržitelnost','Dobíjení a infrastruktura','Cena a dostupnost','Dojezd baterie','Jízdní vlastnosti','Servis a záruka'],growth:[61,42,35,28,19,5],colors:['rgba(120,250,174,.75)','rgba(220,80,80,.7)','rgba(180,180,100,.65)','rgba(220,130,80,.65)','rgba(120,250,174,.5)','rgba(160,160,160,.5)']},
+    extraTitle:'Meziroční růst témat (%)',tableLabel:'Přehled témat',
+    tableHead:['Téma','Zmínky','Podíl','Trend','Dominantní nálade'],
+    tableRows:[['Dobíjení a infrastruktura',890,100,'↑ +42 %','kritická'],['Dojezd baterie',720,81,'↑ +28 %','negativní'],['Cena a dostupnost',640,72,'↑ +35 %','smíšená'],['Jízdní vlastnosti',480,54,'↑ +19 %','pozitivní'],['Servis a záruka',280,31,'→ +5 %','neutrální'],['Ekologie a udržitelnost',190,21,'↑ +61 %','pozitivní']],
+    subtopics:{
+      'Dojezd baterie':[
+        {label:'Zimní pokles výkonu (30–40 %)',count:340,pct:47,eval:'kritické',quotes:['„V létě v pohodě, ale v zimě dojezd klesne o 40 %. Skrytá informace."','„Range drops massively in winter. Nobody warned me."']},
+        {label:'Nedostatečný pro dálkové cesty',count:224,pct:31,eval:'negativní',quotes:['„280 km nestačí na víkendové výlety. Musím plánovat zastávky."','„Range anxiety is real. 280km is not enough for longer trips."']},
+        {label:'Jak maximalizovat dojezd',count:156,pct:22,eval:'neutrální',quotes:['„Jaké jsou tipy na prodloužení dojezdu v zimě?"','„What is the best way to maximize range on highway?"']},
+      ],
+      'Dobíjení a infrastruktura':[
+        {label:'Nedostatek rychlonabíječek',count:378,pct:42,eval:'kritické',quotes:['„Na D1 polovina stanic nefunguje nebo je obsazená."','„Fast charger network is nowhere near ready for mass adoption."']},
+        {label:'Spolehlivost a dostupnost',count:267,pct:30,eval:'negativní',quotes:['„Aplikace ukazuje volnou nabíječku, ale ta nefunguje."','„Charger was broken again. Third time this month."']},
+        {label:'Domácí nabíjení — pozitivní',count:178,pct:20,eval:'pozitivní',quotes:['„Dobíjím doma přes noc, ráno plné auto. Perfektní."','„Home charging is a game-changer. Never visit a petrol station."']},
+        {label:'Cena nabíjení vs. benzín',count:67,pct:8,eval:'neutrální',quotes:['„Na rychlonabíječce je to dražší než benzín."','„DC fast charging costs are getting ridiculous."']},
+      ],
+    },
+    ai:{
+      cs:{summary:'Za 180 dní vzrostl zájem o elektromobilitu o 38 % — téma dobíjení a infrastruktury dominuje (28 % zmínek) a má silně negativní náladu. Zákazníci vnímají nedostatečnou hustotu sítě rychlonabíječek jako hlavní bariéru adopce.',summary2:'Naopak jízdní vlastnosti elektromobilů hodnotí uživatelé pozitivně. Téma ekologie a udržitelnosti roste nejrychleji (+61 %) — signál nastupujícího trendu.',insights:['Dobíjení je největší bariéra — zákazníci řeší dostupnost a spolehlivost rychlonabíječek.','Jízdní vlastnosti jsou silnou devízou — zákazníci je chválí, vhodné pro kampaň.','Ekologie +61 % — nastupující téma, vhodné pro positioning značky.'],warnings:['Servis a záruka: rostoucí frustrace s délkou čekání na opravy — riziko NPS.','Cena: diskuze o nedostupnosti pro střední třídu sílí — citlivé pro komunikaci.','DE segment: výrazně kritičtější k infrastruktuře než CZ/EN.'],recs:[['Vytvořit obsah o dostupných rychlonabíječkách a plánování cest.','Marketing / Obsah'],['Posílit komunikaci jízdních vlastností — zákazníci jsou ochotni doporučovat.','Brand'],['Připravit messaging okolo ekologie pro Q3 kampaň.','Strategie'],['Monitorovat servisní sentiment — adresovat čekací doby.','Zákaznický servis']],quotes:[['„Kde se dá nabít na dálnici D1? Aplikace ukazuje různé věci."','CZ','Facebook · dobíjení'],['„Range anxiety is real. 280km is not enough for longer trips."','EN','Reddit · dojezd'],['„Die Ladeinfrastruktur in Tschechien ist noch nicht bereit."','DE','Forum · infrastruktura'],['„Jízdní vlastnosti jsou fantastické, ticho a akcelerace."','CZ','Blog · jízda'],['„Price point needs to drop 20% to convince mainstream buyers."','EN','Twitter · cena'],['„Ökologisch gut, aber die Reichweite muss noch steigen."','DE','Auto forum · ekologie']]},
+      en:{summary:'Over 180 days, interest in electric mobility grew by 38% — charging infrastructure dominates (28% of mentions) with strongly negative sentiment. Customers see insufficient fast-charging network density as the main barrier to adoption.',summary2:'Driving characteristics receive positive reviews. The ecology and sustainability topic is the fastest growing (+61%) — a signal of an emerging trend.',insights:['Charging is the biggest barrier — customers discuss availability and reliability of fast chargers.','Driving performance is a strong asset — customers recommend it, suitable for campaigns.','Ecology +61% — emerging topic, suitable for brand positioning.'],warnings:['Service & warranty: growing frustration with repair wait times — NPS risk.','Price: discussions about affordability for middle class are intensifying.','DE segment: significantly more critical of infrastructure than CZ/EN.'],recs:[['Create content about available fast chargers and trip planning.','Marketing / Content'],['Amplify driving experience messaging — customers willing to recommend.','Brand'],['Prepare ecology messaging for Q3 campaign.','Strategy'],['Monitor service sentiment — address wait times.','Customer service']],quotes:[['„Kde se dá nabít na dálnici D1? Aplikace ukazuje různé věci."','CZ','Facebook · charging'],['„Range anxiety is real. 280km is not enough for longer trips."','EN','Reddit · range'],['„Die Ladeinfrastruktur in Tschechien ist noch nicht bereit."','DE','Forum · infrastructure'],['„Jízdní vlastnosti jsou fantastické, ticho a akcelerace."','CZ','Blog · driving'],['„Price point needs to drop 20% to convince mainstream buyers."','EN','Twitter · price'],['„Ökologisch gut, aber die Reichweite muss noch steigen."','DE','Auto forum · ecology']]}
+    },
+    records:[{id:1,text:'Kde se dá spolehlivě nabít na dálnici D1? Mapy ukazují různé věci a polovina stanic nefunguje.',topic:'Dobíjení a infrastruktura',sentiment:'negativní',intent:'hledá radu',lang:'CZ',source:'Facebook',date:'2025-02-18',author:'elko_driver',interactions:45,entities:'D1, rychlonabíječka'},{id:2,text:'Range anxiety is real. 280km is just not enough for our weekend trips.',topic:'Dojezd baterie',sentiment:'negativní',intent:'diskutuje',lang:'EN',source:'Reddit',date:'2025-02-17',author:'UK_EV_owner',interactions:32,entities:'range anxiety'},{id:3,text:'Jízdní vlastnosti jsou naprosto fantastické. Ticho a okamžitý kroutící moment.',topic:'Jízdní vlastnosti',sentiment:'pozitivní',intent:'doporučuje',lang:'CZ',source:'Blog',date:'2025-02-16',author:'testdriver',interactions:67,entities:''},{id:4,text:'Die Ladeinfrastruktur ist noch nicht bereit für den Massenmarkt.',topic:'Dobíjení a infrastruktura',sentiment:'negativní',intent:'kritizuje',lang:'DE',source:'Auto forum',date:'2025-02-15',author:'Hans_E',interactions:28,entities:''},{id:5,text:'Price needs to drop at least 20% before mainstream buyers will switch.',topic:'Cena a dostupnost',sentiment:'negativní',intent:'diskutuje',lang:'EN',source:'Twitter',date:'2025-02-14',author:'MarketAnalyst',interactions:89,entities:''},{id:6,text:'Servis čeká 6 týdnů. To je nepřijatelné u moderního vozidla.',topic:'Servis a záruka',sentiment:'negativní',intent:'kritizuje',lang:'CZ',source:'Fórum',date:'2025-02-13',author:'frustrovaný_z',interactions:54,entities:''},{id:7,text:'Ökologisch wirklich gut, aber die Reichweite muss noch steigen.',topic:'Ekologie a udržitelnost',sentiment:'neutrální',intent:'diskutuje',lang:'DE',source:'Auto Bild',date:'2025-02-12',author:'GreenDriver_DE',interactions:23,entities:''},{id:8,text:'Porovnával jsem 4 modely — tento má nejlepší poměr dojezd/cena.',topic:'Cena a dostupnost',sentiment:'neutrální',intent:'porovnává',lang:'CZ',source:'Heureka',date:'2025-02-11',author:'analytik_k',interactions:15,entities:''},{id:9,text:'V létě v pohodě, ale v zimě dojezd klesne o 40 %. To je problém.',topic:'Dojezd baterie',sentiment:'negativní',intent:'varuje',lang:'CZ',source:'Klub EV',date:'2025-02-10',author:'zimní_zkušenost',interactions:41,entities:''},{id:10,text:'Charging network improved a lot this year. No range anxiety on my last trip.',topic:'Dobíjení a infrastruktura',sentiment:'pozitivní',intent:'doporučuje',lang:'EN',source:'Blog',date:'2025-02-09',author:'HappyEV',interactions:19,entities:''}]
+  },
+  competitive:{
+    title:'Autopojišťovny — Competitive Listening',titleEN:'Car insurance — Competitive Listening',
+    meta:'60 dní · 6 100 vstupních záznamů · 2 480 relevantních · CZ / SK',
+    metaEN:'60 days · 6,100 input records · 2,480 relevant · CZ / SK',
+    stats:{mentions:'6 100',topics:'5',time:'5–7 dní'},
+    sent:[48,30,22],sentL:['Negativní','Neutrální','Pozitivní'],
+    intent:[32,28,15,14,11],intentL:['Stěžuje si','Porovnává','Doporučuje','Varuje','Hledá radu'],
+    topics:{labels:['Naše značka','Konkurent A (Kooperativa)','Konkurent B (Allianz)','Konkurent C (Generali)','Konkurent D (ČPP)'],data:[680,590,470,380,360],colors:['rgba(120,250,174,.75)','rgba(180,130,80,.6)','rgba(140,160,220,.6)','rgba(200,120,120,.55)','rgba(160,160,100,.5)']},
+    trend:{cz:[110,120,115,130,145,155,160,175,190,200,215,230],en:[20,22,25,28,30,32,35,38,40,42,45,48],de:[0,0,0,0,0,0,0,0,0,0,0,0]},
+    lang:[88,12,0],
+    sources:{labels:['Sociální sítě','Recenze (e-shop)','Diskuzní fóra','Blogy / weby','Srovnávače'],data:[42,26,18,9,5],colors:['rgba(120,250,174,.75)','rgba(120,200,250,.65)','rgba(180,180,100,.65)','rgba(220,140,80,.6)','rgba(160,160,160,.5)']},
+    extra:{type:'bar',stacked:false,labels:['Naše značka','Kooperativa','Allianz','Generali','ČPP'],datasets:[{label:'Neg %',data:[42,55,48,61,52],color:'rgba(220,80,80,.65)'},{label:'Pos %',data:[30,18,24,16,22],color:'rgba(120,250,174,.65)'}]},
+    extraTitle:'Sentiment — naše značka vs. konkurence',tableLabel:'Share of voice — přehled',
+    tableHead:['Značka','Zmínky','Share of voice (% všech zmínek) *','Sentiment','Top téma'],
+    tableRows:[['Naše značka',680,27,'42 % neg / 30 % pos','cena'],['Kooperativa',590,24,'55 % neg / 18 % pos','likvidace škod'],['Allianz',470,19,'48 % neg / 24 % pos','cena'],['Generali',380,15,'61 % neg / 16 % pos','zákaznický servis'],['ČPP',360,15,'52 % neg / 22 % pos','online správa']],
+    subtopics:{
+      'Naše značka':[
+        {label:'Cena — zdražení bez upozornění',count:198,pct:29,eval:'negativní',quotes:['„Pojistka zdražila o 40 % bez varování. Tohle není fér."','„Price increase without notice. Looking for alternatives."']},
+        {label:'Rychlá likvidace škod',count:178,pct:26,eval:'pozitivní',quotes:['„Škodu vyřídili za 5 dní. Ostatní to umí za měsíc?"','„Claim settled in 4 days. Impressive compared to my previous insurer."']},
+        {label:'Online hlášení — chvála',count:156,pct:23,eval:'pozitivní',quotes:['„Online hlášení škody je intuitivní a rychlé."','„Best digital claims process I have used."']},
+        {label:'Celková hodnota vs. cena',count:148,pct:22,eval:'ambivalentní',quotes:['„Dražší než konkurence, ale servis to zdůvodňuje."','„More expensive but the service quality justifies it."']},
+      ],
+      'Kooperativa':[
+        {label:'Likvidace škod — čekací doby',count:312,pct:53,eval:'kritické',quotes:['„Čekal jsem 3 měsíce na vyplacení. Přecházím."','„3 months to settle a simple claim. Unacceptable."']},
+        {label:'Cena — nejlepší pro mladé řidiče',count:165,pct:28,eval:'pozitivní',quotes:['„Nejlepší nabídka pro mladé řidiče ze 4 pojišťoven."','„Best price for young drivers by far."']},
+        {label:'Komunikace při škodě',count:113,pct:19,eval:'negativní',quotes:['„Nikdo nereagoval na emaily 2 týdny."','„Complete silence from them after I filed the claim."']},
+      ],
+    },
+    ai:{
+      cs:{summary:'V 60denním sledování mají všechny pojišťovny převažující negativní sentiment — jde o specifiku kategorie kde zákazníci sdílejí zejména negativní zkušenosti. Naše značka má nejnižší negativní sentiment (42 %) a nejvyšší pozitivní (30 %) ze sledovaných hráčů.',summary2:'Generali je nejvíce kritizovaná značka (61 % negativní), zejména kvůli zákaznickému servisu. To je příležitost pro positioning naší značky jako nejlépe hodnocené v kategorii.',insights:['Naše značka má nejlepší sentiment ratio v kategorii — vhodné pro brand komunikaci.','Generali je nejslabší — 61 % negativní sentiment, zejména zákaznický servis.','Téma "likvidace škod" dominuje negativním zmínkám u Kooperativy — příležitost pro srovnání.'],warnings:['Téma "cena" je nejčastější negativní zmínkou u naší značky — sledovat cenovou citlivost.','Online správa smluv je slabina ČPP — zákazníci aktivně hledají alternativu.','Zákaznický servis Generali eskaluje — přicházejí zákazníci hledající přestup.'],recs:[['Vytvořit obsah srovnávající rychlost likvidace škod — naše silná stránka.','Marketing'],['Adresovat cenovou transparentnost v komunikaci — zákazníci citliví na cenu.','Brand / Produkt'],['Spustit cílenou kampaň na zákazníky Generali — výrazně nespokojena skupina.','Performance'],['Zlepšit online správu smluv — zákazníci ČPP hledají alternativu.','Produkt / IT']],quotes:[['„Naše pojišťovna vyřídila škodu za 5 dní. Ostatní to umí za měsíc?"','CZ','Fórum · likvidace'],['„Kooperativa — čekal jsem 3 měsíce na vyplacení. Přecházím."','CZ','Heureka · Kooperativa'],['„Allianz má nejpřehlednější online portál ze všech co jsem vyzkoušel."','CZ','Google recenze'],['„Generali zákaznická linka nedostupná. Naprostá katastrofa."','SK','Facebook · Generali'],['„Porovnal jsem 5 pojišťoven — tato vychází nejlépe na cena/plnění."','CZ','Srovnávač.cz'],['„ČPP — aplikace v roce 2025 stále nefunguje."','CZ','AppStore recenze']]},
+      en:{summary:'Over 60 days of monitoring, all insurers show predominantly negative sentiment — typical for a category where customers primarily share negative experiences. Our brand has the lowest negative sentiment (42%) and highest positive (30%) among tracked players.',summary2:'Generali is the most criticised brand (61% negative), particularly for customer service. This is an opportunity to position our brand as the best-rated in the category.',insights:['Our brand has the best sentiment ratio in the category — suitable for brand communication.','Generali is the weakest — 61% negative sentiment, especially customer service.','Claims processing dominates Kooperativa negative mentions — comparison opportunity.'],warnings:['Price is the most common negative mention for our brand — monitor price sensitivity.','Online policy management is a weakness of ČPP — customers actively seeking alternative.','Generali customer service is escalating — customers looking to switch.'],recs:[['Create content comparing claims processing speed — our strong point.','Marketing'],['Address price transparency in communication.','Brand / Product'],['Launch targeted campaign for Generali customers — significantly dissatisfied group.','Performance'],['Improve online policy management — ČPP customers seeking alternatives.','Product / IT']],quotes:[['„Naše pojišťovna vyřídila škodu za 5 dní."','CZ','Forum · claims'],['„Kooperativa — čekal jsem 3 měsíce. Přecházím."','CZ','Heureka'],['„Allianz má nejpřehlednější online portál."','CZ','Google reviews'],['„Generali zákaznická linka nedostupná."','SK','Facebook'],['„Porovnal jsem 5 pojišťoven — tato vychází nejlépe."','CZ','Srovnávač.cz'],['„ČPP — aplikace stále nefunguje."','CZ','AppStore']]}
+    },
+    records:[{id:1,text:'Naše pojišťovna vyřídila škodu za 5 dní bez problémů. Ostatní to umí za měsíc?',topic:'Naše značka',sentiment:'pozitivní',intent:'doporučuje',lang:'CZ',source:'Fórum',date:'2025-03-10',author:'spokojený_z',interactions:38,entities:'likvidace škod'},{id:2,text:'Kooperativa — čekal jsem 3 měsíce na vyplacení pojistné události. Přecházím pryč.',topic:'Konkurent A (Kooperativa)',sentiment:'negativní',intent:'varuje',lang:'CZ',source:'Heureka',date:'2025-03-09',author:'naštvaný_z',interactions:67,entities:'likvidace'},{id:3,text:'Allianz má nejpřehlednější online portál ze všech co jsem vyzkoušel.',topic:'Konkurent B (Allianz)',sentiment:'pozitivní',intent:'doporučuje',lang:'CZ',source:'Google',date:'2025-03-08',author:'tech_user',interactions:12,entities:'portál'},{id:4,text:'Generali zákaznická linka nedostupná po celý den. Naprostá katastrofa.',topic:'Konkurent C (Generali)',sentiment:'negativní',intent:'stěžuje si',lang:'SK',source:'Facebook',date:'2025-03-07',author:'SK_zákazník',interactions:89,entities:'zákaznická linka'},{id:5,text:'Porovnal jsem 5 pojišťoven — naše vychází nejlépe na poměr cena/plnění.',topic:'Naše značka',sentiment:'pozitivní',intent:'porovnává',lang:'CZ',source:'Srovnávač.cz',date:'2025-03-06',author:'spořivý_k',interactions:45,entities:''},{id:6,text:'ČPP aplikace v roce 2025 stále nefunguje. Jak je to možné?',topic:'Konkurent D (ČPP)',sentiment:'negativní',intent:'kritizuje',lang:'CZ',source:'AppStore',date:'2025-03-05',author:'appuser22',interactions:33,entities:'aplikace'},{id:7,text:'Cena pojistky zdražila o 40 % bez upozornění. Tohle není fér.',topic:'Naše značka',sentiment:'negativní',intent:'stěžuje si',lang:'CZ',source:'Fórum',date:'2025-03-04',author:'nespokojený_z',interactions:52,entities:'cena'},{id:8,text:'Generali odmítla plnit škodu kvůli formální chybě v smlouvě. Právník nutný.',topic:'Konkurent C (Generali)',sentiment:'negativní',intent:'varuje',lang:'CZ',source:'Blog',date:'2025-03-03',author:'právní_zkušenost',interactions:78,entities:''},{id:9,text:'Kooperativa má nejlepší pojištění pro mladé řidiče — ověřoval jsem u 4 pojišťoven.',topic:'Konkurent A (Kooperativa)',sentiment:'pozitivní',intent:'porovnává',lang:'CZ',source:'Srovnávač.cz',date:'2025-03-02',author:'mladý_řidič',interactions:21,entities:'mladí řidiči'},{id:10,text:'Naše pojišťovna — online hlášení škody je intuitivní a rychlé. Chválím.',topic:'Naše značka',sentiment:'pozitivní',intent:'doporučuje',lang:'CZ',source:'Google',date:'2025-03-01',author:'digitální_u',interactions:14,entities:'online hlášení'}]
+  },
+  campaign:{
+    title:'Jarní kampaň — Campaign Prep',titleEN:'Spring campaign — Campaign Prep',
+    meta:'30 dní · 3 800 vstupních záznamů · 1 420 relevantních · CZ / EN',
+    metaEN:'30 days · 3,800 input records · 1,420 relevant · CZ / EN',
+    stats:{mentions:'3 800',topics:'7',time:'5–7 dní'},
+    sent:[28,42,30],sentL:['Negativní','Neutrální','Pozitivní'],
+    intent:[28,24,22,16,10],intentL:['Inspirace','Plánuje nákup','Doporučuje','Porovnává','Hledá slevu'],
+    topics:{labels:['Povědomí o produktu','Asociace se značkou','Obavy před nákupem','Nákupní motivátory','Jazyk zákazníků','Rizika','Příležitosti'],data:[380,290,240,220,150,90,50],colors:['rgba(120,250,174,.7)','rgba(120,250,174,.55)','rgba(220,80,80,.55)','rgba(120,250,174,.5)','rgba(180,180,100,.55)','rgba(220,80,80,.45)','rgba(120,250,174,.4)']},
+    trend:{cz:[60,70,75,85,95,110,125,140,155,170,190,210],en:[30,35,40,45,50,58,65,72,80,90,100,115],de:[0,0,0,0,0,0,0,0,0,0,0,0]},
+    lang:[65,35,0],
+    sources:{labels:['Sociální sítě','Blogy / weby','Diskuzní fóra','Recenze (e-shop)','Ostatní'],data:[45,24,18,10,3],colors:['rgba(120,250,174,.75)','rgba(120,200,250,.65)','rgba(180,180,100,.65)','rgba(220,140,80,.6)','rgba(160,160,160,.5)']},
+    extra:{type:'bar',stacked:false,labels:['Bariéry před nákupem','Nákupní motivátory','Asociace se značkou','Jazyk kampaně','Rizika'],datasets:[{label:'Síla signálu',data:[72,68,55,48,35],color:'rgba(120,250,174,.65)'}]},
+    extraTitle:'Síla signálů pro kampaň',tableLabel:'Přehled témat kampaně',
+    tableHead:['Téma','Zmínky','Síla signálu','Sentiment','Doporučení'],
+    tableRows:[['Povědomí o produktu',380,100,'pozitivní','posílit'],['Asociace se značkou',290,76,'neutrální','rozvíjet'],['Obavy před nákupem',240,63,'negativní','adresovat'],['Nákupní motivátory',220,58,'pozitivní','využít'],['Jazyk zákazníků',150,39,'neutrální','zakomponovat'],['Rizika',90,24,'negativní','monitorovat'],['Příležitosti',50,13,'pozitivní','testovat']],
+    ai:{
+      cs:{summary:'Analýza 1 420 relevantních zmínek před jarní kampaní ukazuje příznivý sentiment (30 % pozitivní) a silné nákupní záměry — 22 % zákazníků aktivně plánuje nákup v Q2. Největší bariéra je cena a obavy z kvality, nikoli povědomí o produktu.',summary2:'Zákazníci spontánně používají jazyk "svěžesti", "nového začátku" a "připravenosti na léto" — přesně v souladu s plánovanou kampaní. Klíčová příležitost: testimonials od spokojených zákazníků.',insights:['22 % zákazníků aktivně plánuje nákup — kampaň zasáhne připravenou poptávku.','Jazyk zákazníků "nový začátek / svěžest" ladí s kampaňovým konceptem.','Testimonials a doporučení jsou nejvlivnějším formátem v kategorii.'],warnings:['Cena je hlavní bariéra — kampaň musí komunikovat hodnotu, ne jen produkt.','Obavy z kvality u nových zákazníků — adresovat recenzemi a zárukou.','Sezónní peak přijde dříve — spustit 2 týdny před plánovaným termínem.'],recs:[['Zakomponovat jazyk zákazníků do headlines: "připraveni na léto", "svěží start".','Creative / Copywriting'],['Testimonials jako hlavní formát — zákazníci jim věří víc než branded contentu.','Creative'],['Adresovat cenovou bariéru: zdůraznit hodnotu a ROI, nebo připravit vstupní nabídku.','Produkt / Marketing'],['Spustit kampaň 2 týdny dříve — sezónní zájem roste od konce března.','Media planning']],quotes:[['„Chci se připravit na léto, hledám něco na svěžest interiéru."','CZ','Instagram · inspirace'],['„Planning to buy before Easter — any discount codes available?"','EN','Reddit · sleva'],['„Doporučuji — koupila jsem loni a letos kupuji znovu."','CZ','Google · testimonial'],['„Quality concerns me — are there any independent reviews?"','EN','Forum · obavy'],['„Cena je trochu vyšší, ale kvalita to zdůvodňuje."','CZ','Heureka · hodnota'],['„Perfect for spring cleaning. Already ordered two."','EN','Amazon · nákup']]},
+      en:{summary:'Analysis of 1,420 relevant mentions ahead of the spring campaign shows favourable sentiment (30% positive) and strong purchase intent — 22% of customers are actively planning a Q2 purchase. The main barrier is price and quality concerns, not product awareness.',summary2:'Customers spontaneously use language of "freshness", "new beginnings" and "ready for summer" — exactly aligned with the planned campaign. Key opportunity: testimonials from satisfied customers.',insights:['22% of customers actively planning to buy — campaign will reach ready demand.','Customer language "new start / freshness" aligns with campaign concept.','Testimonials are the most influential format in the category.'],warnings:['Price is the main barrier — campaign must communicate value, not just product.','Quality concerns from new customers — address with reviews and warranty.','Seasonal peak will come earlier — launch 2 weeks ahead of planned date.'],recs:[['Incorporate customer language into headlines: "ready for summer", "fresh start".','Creative / Copywriting'],['Testimonials as the main format — customers trust them more than branded content.','Creative'],['Address price barrier: emphasise value and ROI, or prepare an entry offer.','Product / Marketing'],['Launch campaign 2 weeks earlier — seasonal interest grows from late March.','Media planning']],quotes:[['„Chci se připravit na léto, hledám něco na svěžest interiéru."','CZ','Instagram · inspiration'],['„Planning to buy before Easter — any discount codes available?"','EN','Reddit · discount'],['„Doporučuji — koupila jsem loni a letos kupuji znovu."','CZ','Google · testimonial'],['„Quality concerns me — are there any independent reviews?"','EN','Forum · concerns'],['„Cena je trochu vyšší, ale kvalita to zdůvodňuje."','CZ','Heureka · value'],['„Perfect for spring cleaning. Already ordered two."','EN','Amazon · purchase']]}
+    },
+    records:[{id:1,text:'Chci se připravit na léto. Hledám něco na svěžest interiéru a exteriéru.',topic:'Nákupní motivátory',sentiment:'pozitivní',intent:'plánuje nákup',lang:'CZ',source:'Instagram',date:'2025-03-15',author:'jaro_ready',interactions:34,entities:''},{id:2,text:'Planning to buy before Easter. Are there any discount codes available?',topic:'Obavy před nákupem',sentiment:'neutrální',intent:'hledá slevu',lang:'EN',source:'Reddit',date:'2025-03-14',author:'BargainHunter',interactions:22,entities:'Easter'},{id:3,text:'Doporučuji všem — koupila jsem loni a letos kupuji znovu. Skvělý produkt.',topic:'Asociace se značkou',sentiment:'pozitivní',intent:'doporučuje',lang:'CZ',source:'Google',date:'2025-03-13',author:'věrná_zákaznice',interactions:67,entities:''},{id:4,text:'Quality concerns me. Are there any independent reviews from real users?',topic:'Obavy před nákupem',sentiment:'negativní',intent:'hledá radu',lang:'EN',source:'Forum',date:'2025-03-12',author:'SkepticalBuyer',interactions:28,entities:''},{id:5,text:'Cena je trochu vyšší než konkurence, ale kvalita to plně zdůvodňuje.',topic:'Nákupní motivátory',sentiment:'pozitivní',intent:'porovnává',lang:'CZ',source:'Heureka',date:'2025-03-11',author:'kvalitní_výběr',interactions:19,entities:''},{id:6,text:'Perfect for spring cleaning. Simple, effective, already ordered two.',topic:'Nákupní motivátory',sentiment:'pozitivní',intent:'doporučuje',lang:'EN',source:'Amazon',date:'2025-03-10',author:'CleanFreak',interactions:45,entities:''},{id:7,text:'Kdy přijde jarní kolekce? Čekám na ni od února.',topic:'Povědomí o produktu',sentiment:'pozitivní',intent:'plánuje nákup',lang:'CZ',source:'Facebook',date:'2025-03-09',author:'netrpělivá_z',interactions:38,entities:'jarní kolekce'},{id:8,text:'Is this vegan / cruelty-free? Very important for my purchase decision.',topic:'Obavy před nákupem',sentiment:'neutrální',intent:'hledá radu',lang:'EN',source:'Instagram',date:'2025-03-08',author:'EthicalBuyer',interactions:52,entities:'vegan'},{id:9,text:'Svěží vůně a long-lasting efekt. Přesně to co jsem hledala na jaro.',topic:'Jazyk zákazníků',sentiment:'pozitivní',intent:'doporučuje',lang:'CZ',source:'Blog',date:'2025-03-07',author:'parfémová_b',interactions:29,entities:'vůně'},{id:10,text:'Compared with 3 competitors — this one wins on scent and longevity.',topic:'Asociace se značkou',sentiment:'pozitivní',intent:'porovnává',lang:'EN',source:'YouTube',date:'2025-03-06',author:'ReviewChannel',interactions:156,entities:''}]
+  }
+};
+
+// ── CHARTS ──
+Chart.defaults.color='rgba(245,247,244,.7)';
+Chart.defaults.font={family:"'DM Sans',sans-serif",size:12};
+function updateChartDefaults(){
+  const light=document.documentElement.getAttribute('data-theme')==='light';
+  Chart.defaults.color=light?'rgba(14,58,47,0.75)':'rgba(245,247,244,.7)';
+  if(currentType) selectType(currentType);
+}
+let charts={};
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};}
+
+function buildCharts(D){
+  destroyCharts();
+  const light=document.documentElement.getAttribute('data-theme')==='light';
+  const lc=light?'rgba(14,58,47,0.75)':'rgba(245,247,244,.7)';
+  const gc=light?'rgba(14,58,47,0.1)':'rgba(120,250,174,.07)';
+  const E='#78FAAE',ED='rgba(120,250,174,.15)';
+  const leg=(pos,sz)=>({position:pos||'right',labels:{boxWidth:10,padding:sz||14,color:lc,font:{size:sz===12?11:12}}});
+  const sc={x:{grid:{color:gc},ticks:{color:lc}},y:{grid:{color:gc},ticks:{color:lc}}};
+  const wks=(D.trend&&D.trend.weeks&&D.trend.weeks.labels&&D.trend.weeks.labels.length)?D.trend.weeks.labels:['Týd.-11','Týd.-10','Týd.-9','Týd.-8','Týd.-7','Týd.-6','Týd.-5','Týd.-4','Týd.-3','Týd.-2','Týd.-1','Aktuální'];
+
+  // Build chart grid HTML per type
+  const grid=document.getElementById('chart-grid');
+  const LAYOUTS={
+    customer:[
+      {id:'c-sent',title:'Sentiment breakdown (4 kategorie)',wide:false,tall:false},
+      {id:'c-intent',title:'Intent — záměr zákazníků',wide:false,tall:false},
+      {id:'c-topics',title:'Top pain points — počet zmínek',wide:true,tall:true},
+      {id:'c-trend',title:'Trend zmínek v čase',wide:true,tall:false},
+      {id:'c-lang',title:'Jazykové rozložení',wide:false,tall:false},
+      {id:'c-sources',title:'Zdroje — odkud záznamy pocházejí',wide:false,tall:false},
+      {id:'c-extra',title:'Sentiment podle tématu (stacked)',wide:true,tall:false},
+    ],
+    market:[
+      {id:'c-extra',title:'Meziroční růst témat — kde trh přidává nebo ztrácí energii (%)',wide:true,tall:false},
+      {id:'c-topics',title:'Absolutní objemy témat — počet zmínek za 180 dní',wide:true,tall:true},
+      {id:'c-trend',title:'Vývoj objemu a sentimentu v čase — roste zájem, ale i negativita?',wide:true,tall:false},
+      {id:'c-sent',title:'Celkový sentiment kategorie',wide:false,tall:false},
+      {id:'c-lang',title:'Jazykové rozložení konverzace',wide:false,tall:false},
+      {id:'c-sources',title:'Zdroje — kde konverzace probíhá',wide:false,tall:false},
+    ],
+    competitive:[
+      {id:'c-topics',title:'Share of voice — podíl na zmínkách (%)',wide:true,tall:false},
+      {id:'c-extra',title:'Sentiment — naše značka vs. konkurence',wide:true,tall:false},
+      {id:'c-trend',title:'Trend zmínek v čase',wide:true,tall:false},
+      {id:'c-sent',title:'Celkový sentiment (všechny značky)',wide:false,tall:false},
+      {id:'c-lang',title:'Jazykové rozložení',wide:false,tall:false},
+      {id:'c-sources',title:'Zdroje — kde zákazníci mluví o pojišťovnách',wide:false,tall:false},
+    ],
+    campaign:[
+      {id:'c-intent',title:'Nákupní záměry a motivace',wide:false,tall:false},
+      {id:'c-sent',title:'Sentiment před kampaní',wide:false,tall:false},
+      {id:'c-extra',title:'Síla signálů pro kampaň',wide:true,tall:false},
+      {id:'c-topics',title:'Témata — relevance pro kampaň',wide:true,tall:true},
+      {id:'c-trend',title:'Trend zájmu v čase',wide:true,tall:false},
+      {id:'c-lang',title:'Jazykové rozložení',wide:false,tall:false},
+      {id:'c-sources',title:'Zdroje — kde zákazníci vyjadřují nákupní záměry',wide:false,tall:false},
+    ],
+  };
+  const layout=LAYOUTS[currentType]||LAYOUTS.customer;
+  grid.innerHTML=layout.map(c=>`<div class="cc${c.wide?' wide':''}"><div class="ct">${c.title}</div><div class="cw${c.tall?' tall':''}"><canvas id="${c.id}"></canvas></div></div>`).join('');
+
+  // Build charts
+  const sentColors=['rgba(220,80,80,.75)','rgba(180,140,60,.6)','rgba(120,130,120,.5)','rgba(120,250,174,.7)'];
+  const sentLabels4=['Negativní','Ambivalentní','Neutrální','Pozitivní'];
+  const sentData4=[D.sent[0]||0, D.sent[1]||0, D.sent[2]||0, D.sent[3]||0];
+
+  if(document.getElementById('c-sent'))
+    charts.sent=new Chart(document.getElementById('c-sent'),{type:'doughnut',data:{labels:sentLabels4,datasets:[{data:sentData4,backgroundColor:sentColors,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:leg()}}});
+
+  if(document.getElementById('c-intent'))
+    charts.intent=new Chart(document.getElementById('c-intent'),{type:'doughnut',data:{labels:D.intentL,datasets:[{data:D.intent,backgroundColor:['rgba(120,250,174,.75)','rgba(100,180,250,.7)','rgba(220,80,80,.65)','rgba(120,250,174,.45)','rgba(180,180,100,.55)','rgba(220,140,80,.6)','rgba(100,130,120,.4)'],borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:leg('right',12)}}});
+
+  if(document.getElementById('c-topics')){
+    if(currentType==='competitive'){
+      // Horizontal bar showing absolute % share of voice
+      const total=D.topics.data.reduce((a,b)=>a+b,0);
+      const pcts=D.topics.data.map(v=>Math.round(v/total*100));
+      charts.topics=new Chart(document.getElementById('c-topics'),{type:'bar',data:{labels:D.topics.labels,datasets:[{data:pcts,backgroundColor:D.topics.colors,borderRadius:5,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.x+' % zmínek'}}},scales:{x:{grid:{color:gc},ticks:{color:lc,callback:v=>v+'%'},max:40},y:{grid:{display:false},ticks:{font:{size:12},color:lc}}}}});
+    } else {
+      charts.topics=new Chart(document.getElementById('c-topics'),{type:'bar',data:{labels:D.topics.labels,datasets:[{data:D.topics.data,backgroundColor:D.topics.colors,borderRadius:5,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc},ticks:{color:lc}},y:{grid:{display:false},ticks:{font:{size:12},color:lc}}}}});
+    }
+  }
+
+  if(document.getElementById('c-trend')){
+    if(currentType==='market'&&D.trend.sentNeg){
+      charts.trend=new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:wks,datasets:[
+        {label:'Objem zmínek (CZ)',data:D.trend.cz,borderColor:E,backgroundColor:ED,tension:.4,borderWidth:2,pointRadius:3,fill:true,yAxisID:'y'},
+        {label:'% negativní sentiment',data:D.trend.sentNeg,borderColor:'rgba(220,80,80,.8)',backgroundColor:'transparent',tension:.4,borderWidth:2,pointRadius:3,borderDash:[4,3],yAxisID:'y2'},
+        {label:'% pozitivní sentiment',data:D.trend.sentPos,borderColor:'rgba(120,250,174,.7)',backgroundColor:'transparent',tension:.4,borderWidth:1.5,pointRadius:2,borderDash:[4,3],yAxisID:'y2'},
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14,color:lc}}},scales:{x:{grid:{color:gc},ticks:{color:lc}},y:{grid:{color:gc},ticks:{color:lc},title:{display:true,text:'počet zmínek',color:lc,font:{size:11}}},y2:{position:'right',grid:{display:false},ticks:{color:lc,callback:v=>v+'%'},title:{display:true,text:'sentiment %',color:lc,font:{size:11}},min:0,max:80}}}});
+    } else {
+      charts.trend=new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:wks,datasets:[{label:'CZ',data:D.trend.cz,borderColor:E,backgroundColor:ED,tension:.4,borderWidth:2,pointRadius:3,fill:true},{label:'EN',data:D.trend.en,borderColor:'rgba(180,200,240,.8)',backgroundColor:'rgba(180,200,240,.05)',tension:.4,borderWidth:1.5,pointRadius:2},{label:'DE',data:D.trend.de,borderColor:'rgba(220,160,120,.75)',backgroundColor:'rgba(220,160,120,.04)',tension:.4,borderWidth:1.5,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{boxWidth:10,padding:16,color:lc}}},scales:sc}});
+    }
+  }
+
+  if(document.getElementById('c-lang'))
+    charts.lang=new Chart(document.getElementById('c-lang'),{type:'doughnut',data:{labels:['CZ','EN','DE'],datasets:[{data:D.lang,backgroundColor:['rgba(120,250,174,.75)','rgba(120,200,250,.6)','rgba(220,180,100,.55)'],borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:leg('right',18)}}});
+
+  if(document.getElementById('c-sources')&&D.sources)
+    charts.sources=new Chart(document.getElementById('c-sources'),{type:'doughnut',data:{labels:D.sources.labels,datasets:[{data:D.sources.data,backgroundColor:D.sources.colors,borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{boxWidth:10,padding:10,color:lc,font:{size:11}}}}}});
+
+  if(document.getElementById('c-extra')){
+    const ex=D.extra;
+    const xleg={position:'top',labels:{boxWidth:10,padding:14,color:lc}};
+    if(ex.type==='growth'){
+      // Horizontal bar showing % growth, colored by value
+      const growthColors=ex.growth.map(v=>v>40?'rgba(120,250,174,.8)':v>20?'rgba(120,250,174,.55)':v>0?'rgba(180,180,100,.6)':'rgba(220,80,80,.6)');
+      charts.extra=new Chart(document.getElementById('c-extra'),{type:'bar',data:{labels:ex.labels,datasets:[{data:ex.growth,backgroundColor:growthColors,borderRadius:5,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' +'+ctx.parsed.x+' % meziročně'}}},scales:{x:{grid:{color:gc},ticks:{color:lc,callback:v=>'+'+v+'%'},min:0},y:{grid:{display:false},ticks:{font:{size:12},color:lc}}}}});
+    } else if(ex.type==='bar'&&ex.stacked){
+      charts.extra=new Chart(document.getElementById('c-extra'),{type:'bar',data:{labels:ex.labels,datasets:ex.datasets.map(ds=>({label:ds.label,data:ds.data,backgroundColor:ds.color,borderRadius:3,borderWidth:0}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:xleg},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11},color:lc}},y:{stacked:true,grid:{color:gc},ticks:{callback:v=>v+'%',color:lc}}}}});
+    } else if(ex.type==='line'){
+      charts.extra=new Chart(document.getElementById('c-extra'),{type:'line',data:{labels:ex.labels,datasets:ex.datasets.map(ds=>({label:ds.label,data:ds.data,borderColor:ds.color,tension:.4,borderWidth:2,pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:xleg},scales:sc}});
+    } else {
+      charts.extra=new Chart(document.getElementById('c-extra'),{type:'bar',data:{labels:ex.labels,datasets:ex.datasets.map(ds=>({label:ds.label,data:ds.data,backgroundColor:ds.color,borderRadius:5,borderWidth:0}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:xleg},scales:{x:{grid:{display:false},ticks:{color:lc}},y:{grid:{color:gc},ticks:{color:lc}}}}});
+    }
+  }
+}
+
+
+// ── PIVOT TABLE ──
+function buildTable(D){
+  const sc=s=>{const sl=String(s).toLowerCase();return sl==='negativní'||sl==='kritické'||sl.includes('neg')?'bneg':sl==='pozitivní'||sl.includes('pos')?'bpos':sl==='ambivalentní'?'bamb':'bneu';};
+  document.getElementById('table-label').textContent=D.tableLabel||'Přehled témat';
+  const sovNote=document.getElementById('sov-note');
+  if(sovNote) sovNote.style.display=currentType==='competitive'?'block':'none';
+  document.getElementById('pivot-head').innerHTML='<tr><th style="width:28px"></th>'+D.tableHead.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+  const totalMentions=D.tableRows.reduce((s,r)=>s+(typeof r[1]==='number'?r[1]:0),0);
+  const maxV=Math.max(...D.tableRows.map(r=>r[2]));
+  const subs=D.subtopics||{};
+  document.getElementById('pivot-body').innerHTML=D.tableRows.map((r,ri)=>{
+    const barW=Math.round(r[2]/maxV*100);
+    const realPct=currentType==='competitive'?r[2]:Math.round((typeof r[1]==='number'?r[1]:0)/totalMentions*100);
+    const topicName=r[0];
+    const hasSub=subs[topicName]&&subs[topicName].length>0;
+    const cells=r.map((v,i)=>{
+      if(i===2) return `<td><div class="bm"><div class="bmt"><div class="bmf" style="width:${barW}%"></div></div>${currentType==='competitive'?realPct+' %':realPct+' %'}</div></td>`;
+      if(i===3) return `<td><span class="badge ${sc(String(v))}">${v}</span></td>`;
+      if(i===4) return `<td><span class="badge bint">${v}</span></td>`;
+      return `<td>${i===0?'<strong>'+v+'</strong>':v}</td>`;
+    });
+    const expandBtn=hasSub?`<button class="expand-btn" id="expand-${ri}" onclick="toggleSub(${ri},'${topicName.replace(/'/g,"\\'")}')">▶</button>`:`<span style="display:inline-block;width:22px"></span>`;
+    const mainRow=`<tr id="main-row-${ri}"><td style="padding:4px 6px">${expandBtn}</td>${cells.join('')}</tr>`;
+    let subRows='';
+    if(hasSub){
+      const subMax=Math.max(...subs[topicName].map(s=>s.count));
+      subRows=`<tr id="sub-section-${ri}" style="display:none"><td colspan="${D.tableHead.length+1}" style="padding:0">
+        <table style="width:100%;border-collapse:collapse">
+          <tr style="background:rgba(120,250,174,0.06)">
+            <td colspan="${D.tableHead.length+1}" style="padding:6px 12px 4px 32px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase">Sub-témata · 2. průchod dat (Cesta B)</td>
+          </tr>
+          ${subs[topicName].map(s=>{
+            const spct=Math.round(s.count/subMax*100);
+            return `<tr class="sub-row">
+              <td colspan="2" style="padding:10px 12px 4px 32px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <strong style="font-size:13px;color:var(--tx)">${s.label}</strong>
+                  <span class="badge ${sc(s.eval)}" style="font-size:10px">${s.eval}</span>
+                  <span style="font-size:12px;color:var(--txm);margin-left:auto">${s.count} zmínek</span>
+                  <div class="sub-bar-track"><div class="sub-bar-fill" style="width:${spct}%"></div></div>
+                  <span style="font-size:11px;color:var(--txm);min-width:28px">${s.pct} %</span>
+                </div>
+                ${s.quotes.map(q=>`<div class="sub-quote">${q}</div>`).join('')}
+              </td>
+            </tr>`;
+          }).join('')}
+        </table>
+      </td></tr>`;
+    }
+    return mainRow+subRows;
+  }).join('');
+}
+
+function toggleSub(ri,topic){
+  const sec=document.getElementById('sub-section-'+ri);
+  const btn=document.getElementById('expand-'+ri);
+  if(!sec||!btn) return;
+  const open=sec.style.display!=='none'&&sec.style.display!=='';
+  sec.style.display=open?'none':'table-row';
+  btn.classList.toggle('open',!open);
+}
+
+// ── AI CARDS ──
+function renderAICards(D,l='cs'){
+  const ai=D.ai[l]||D.ai.cs;
+  const sC=(t,copyId)=>`<button class="btn-i ccp" onclick="copyCard(this,'${copyId}')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Kopírovat</button>`;
+  document.getElementById('ai-cards').innerHTML=`
+    <div class="aic full"><div class="ail"><div class="aid"></div>Shrnutí</div>${sC('Shrnutí','sum')}
+      <p>${ai.summary}</p><p>${ai.summary2}</p></div>
+    <div class="aic"><div class="ail"><div class="aid"></div>Top 3 insights</div>${sC('Insights','ins')}
+      <ul class="inl">${ai.insights.map((t,i)=>`<li class="ini"><div class="inn">0${i+1}</div><div class="int">${t}</div></li>`).join('')}</ul></div>
+    <div class="aic"><div class="ail"><div class="aid"></div>Varovné signály</div>
+      <div class="wl">${ai.warnings.map(w=>`<div class="wi"><div class="wic">▲</div><div class="wit">${w}</div></div>`).join('')}</div></div>
+    <div class="aic"><div class="ail"><div class="aid"></div>Doporučení</div>
+      <div class="rl">${ai.recs.map(r=>`<div class="ri"><div class="ra">→</div><div class="rb"><div class="rt">${r[0]}</div><div class="rte">${r[1]}</div></div></div>`).join('')}</div></div>
+    <div class="aic full"><div class="ail"><div class="aid"></div>Ukázkové citace</div>
+      <div class="qg">${ai.quotes.map(q=>`<div class="qc"><div class="qt">${q[0]}</div><div class="qm"><span class="ql">${q[1]}</span><span>${q[2]}</span></div></div>`).join('')}</div></div>`;
+}
+
+// ── SELECT TYPE ──
+let currentType='customer';
+function selectType(type){
+  currentType=type;
+  document.querySelectorAll('.tybtn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tybtn').forEach(function(b){if(b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf("'"+type+"'")>=0)b.classList.add('active');});
+  const t=TAX[type];
+  document.getElementById('proj-tax').value=t.topics;
+  document.getElementById('proj-relevance').value=t.relevance||'';
+  document.getElementById('tax-hint').textContent=t.label;
+  const D=DEMO[type];
+  if(!window._realDataLoaded){document.getElementById('s-mentions').textContent='—';document.getElementById('s-topics').textContent='—';}
+  document.getElementById('report-title').textContent=lang==='en'?D.titleEN:D.title;
+  document.getElementById('report-meta').innerHTML=(lang==='en'?D.metaEN:D.meta)+' · <span id="rdate"></span>';
+  document.getElementById('rdate').textContent=new Date().toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'});
+
+  filtRecs=[...(D.records||[])];
+  exPage=1;
+  setTimeout(()=>{if(!window._realDataLoaded){buildCharts(D);buildTable(D);renderAICards(D,lang);populateTopicFilter(D);}if(document.getElementById('view-raw').style.display!=='none')drawEx();},50);
+}
+
+// ── EXPLORER ──
+let filtRecs=[],exPage=1;
+const PG=10;
+function populateTopicFilter(D){
+  const sel=document.getElementById('ftopic');
+  sel.innerHTML='<option value="">Všechna témata</option>'+D.topics.labels.map(l=>`<option>${l}</option>`).join('');
+}
+function sentCls(s){return s==='negativní'?'bneg':s==='pozitivní'?'bpos':s==='ambivalentní'?'bamb':'bneu';}
+function renderEx(){
+  exPage=1;
+  ['esearch','ftopic','fsent','flang','fintent'].forEach(id=>{const el=document.getElementById(id);if(el){if(el.tagName==='INPUT')el.value='';else el.value='';}});
+  relFilter='all';
+  document.querySelectorAll('#rel-all,#rel-yes,#rel-no').forEach((b,i)=>b.classList.toggle('active',i===0));
+  filterEx();
+}
+let relFilter='all';
+function setRelFilter(v,btn){
+  relFilter=v;
+  document.querySelectorAll('#rel-all,#rel-yes,#rel-no').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterEx();
+}
+function filterEx(){
+  const allRecs=window._allRealRecs||[];
+  const q=document.getElementById('esearch').value.toLowerCase();
+  const tp=document.getElementById('ftopic').value,sn=document.getElementById('fsent').value;
+  const ln=document.getElementById('flang').value,it=document.getElementById('fintent').value;
+  filtRecs=allRecs.filter(r=>(!q||r.text.toLowerCase().includes(q)||(r.entities||'').toLowerCase().includes(q))&&(!tp||r.topic===tp)&&(!sn||r.sentiment===sn)&&(!ln||r.lang===ln)&&(!it||r.intent===it)&&(relFilter==='all'||(relFilter==='yes'&&r.relevant!==false)||(relFilter==='no'&&r.relevant===false)));
+  exPage=1;drawEx();}
+function drawEx(){
+  const start=(exPage-1)*PG,pg=filtRecs.slice(start,start+PG);
+  const c=document.getElementById("ex-cards"),e=document.getElementById("ex-empty");
+  document.getElementById("ex-count").textContent=filtRecs.length+" záznamů";
+  if(!filtRecs.length){c.innerHTML="";e.style.display="block";updatePg();return;}
+  e.style.display="none";
+  const scCls=s=>s==="negativní"?"bneg":s==="pozitivní"?"bpos":s==="ambivalentní"?"bamb":"bneu";
+  const sentShort=s=>s==="negativní"?"neg.":s==="pozitivní"?"poz.":"neu.";
+  c.innerHTML=`<div style="background:var(--card);border:1px solid var(--b);border-radius:10px;overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:1px solid var(--b)"><th style="padding:8px 12px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;text-align:center;width:42px">Rel.</th><th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;width:33%">Text zmínky</th><th style="padding:8px 12px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;text-align:left">Téma</th><th style="padding:8px 12px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;text-align:left">Sent.</th><th style="padding:8px 12px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;text-align:left">Intent</th><th style="padding:8px 12px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;text-align:left">Zdroj</th><th style="padding:8px 12px;font-size:11px;font-weight:500;color:var(--el);letter-spacing:.07em;text-transform:uppercase;text-align:center">Jaz.</th></tr></thead><tbody>${pg.map(r=>`<tr onclick="openModal(${r.id})" style="border-bottom:1px solid rgba(120,250,174,.06);cursor:pointer" onmouseover="this.style.background='var(--el-dim)'" onmouseout="this.style.background='transparent'"><td style="padding:9px 12px" onclick="event.stopPropagation();toggleRel(${r.id})"><span title="Přepnout relevanci" style="font-size:10px;padding:2px 6px;border-radius:4px;cursor:pointer;${r.relevant===false?'background:rgba(220,80,80,.2);color:#ff8a8a':'background:rgba(120,250,174,.15);color:var(--el)'}">${r.relevant===false?'NE':'ANO'}</span></td><td style="padding:9px 12px;color:var(--tx);line-height:1.4">${hlText(r.text.length>85?r.text.slice(0,85)+"…":r.text)}</td><td style="padding:9px 12px;white-space:nowrap"><span class="badge bint" style="font-size:10px">${r.topic.length>20?r.topic.slice(0,20)+"…":r.topic}</span></td><td style="padding:9px 12px;white-space:nowrap"><span class="badge ${scCls(r.sentiment)}" style="font-size:10px">${sentShort(r.sentiment)}</span></td><td style="padding:9px 12px;font-size:12px;color:var(--txm);white-space:nowrap">${r.intent}</td><td style="padding:9px 12px;font-size:12px;color:var(--txm);white-space:nowrap">${r.source}</td><td style="padding:9px 12px;text-align:center"><span style="background:var(--el-dim);color:var(--el);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:500">${r.lang}</span></td></tr>`).join("")}</tbody></table></div>`;
+  updatePg();}
+function hlText(t){
+  const q=document.getElementById('esearch').value.trim();
+  if(!q)return t;
+  return t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:rgba(120,250,174,.3);color:var(--tx);border-radius:2px;padding:0 2px">$1</mark>');}
+function updatePg(){
+  const tot=Math.ceil(filtRecs.length/PG);
+  document.getElementById('ex-pginfo').textContent=filtRecs.length?`Strana ${exPage} z ${tot} · ${filtRecs.length} záznamů`:'';
+  document.getElementById('btn-prev').style.opacity=exPage<=1?.4:1;
+  document.getElementById('btn-next').style.opacity=exPage>=tot?.4:1;}
+function toggleRel(id){
+  const r=(window._allRealRecs||[]).find(x=>x.id===id);
+  if(r){r.relevant=r.relevant===false?true:false;}
+  filterEx();
+}
+function resetEx(){['esearch','ftopic','fsent','flang','fintent'].forEach(id=>{const el=document.getElementById(id);if(el.tagName==='INPUT')el.value='';else el.value='';});renderEx();}
+function changePg(d){const tot=Math.ceil(filtRecs.length/PG);exPage=Math.max(1,Math.min(tot,exPage+d));drawEx();document.getElementById('report').scrollIntoView({behavior:'smooth',block:'start'});}
+function openModal(id){
+  const r=(window._allRealRecs||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('modal-body').innerHTML=`<div style="font-size:11px;color:var(--el);letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem">Detail záznamu</div><p style="font-size:15px;line-height:1.75;margin-bottom:1.25rem;color:var(--tx)">${r.text}</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${[['Téma',r.topic],['Sentiment',`<span class="badge ${sentCls(r.sentiment)}">${r.sentiment}</span>`],['Intent',r.intent],['Jazyk',`<span style="background:var(--el-dim);color:var(--el);font-size:12px;padding:2px 9px;border-radius:10px;font-weight:500">${r.lang}</span>`],['Zdroj',r.source],['Datum',r.date],['Autor',r.author],['Interakce',`<span style="color:var(--el);font-weight:500">${r.interactions}</span>`]].map(([k,v])=>`<div style="background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px"><div style="font-size:11px;color:var(--txm);margin-bottom:4px">${k}</div><div style="font-size:13px;color:var(--tx)">${v}</div></div>`).join('')}</div>${r.entities?`<div style="background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-top:10px"><div style="font-size:11px;color:var(--txm);margin-bottom:6px">Entity</div><div style="font-size:13px;color:var(--tx)">${r.entities}</div></div>`:''}`;
+  document.getElementById('modal').style.display='flex';}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)this.style.display='none';});
+
+// ── UPLOAD ──
+function handleFile(input){var f=input.files[0];if(!f)return;window._loadedFile=f;window._realDataLoaded=false;document.getElementById('upz').style.borderColor='#78FAAE';if(!f.name.toLowerCase().endsWith('.csv')&&typeof XLSX!=='undefined'){var rd=new FileReader();rd.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var ws=wb.Sheets[wb.SheetNames[0]];var rows=XLSX.utils.sheet_to_json(ws,{defval:''});var keys=rows.length?Object.keys(rows[0]):[];var dc=keys.find(function(k){return['date','time','created','published'].some(function(n){return k.toLowerCase().indexOf(n)>-1;});});var info=f.name+' · '+rows.length.toLocaleString()+' záznamů';if(dc){var dates=rows.map(function(r){return String(r[dc]||'').slice(0,10);}).filter(function(d){return d.match(/^\d{4}-\d{2}-\d{2}$/);}).sort();if(dates.length)info+=' · '+dates[0]+' — '+dates[dates.length-1];}document.getElementById('upt').textContent=info;}catch(err){document.getElementById('upt').textContent=f.name;}};rd.readAsArrayBuffer(f);}else{document.getElementById('upt').textContent=f.name;}}
+const upz=document.getElementById('upz');
+upz.addEventListener('dragover',e=>{e.preventDefault();upz.classList.add('drag');});
+upz.addEventListener('dragleave',()=>upz.classList.remove('drag'));
+upz.addEventListener('drop',e=>{e.preventDefault();upz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f){handleFile({files:[f]});}});
+
+// ── PROGRESS ──
+function setStep(n,s,c){const d=document.getElementById('d'+n),ct=document.getElementById('c'+n);d.className='sdot s'+s;d.innerHTML=s==='done'?'✓':n;if(c)ct.textContent=c;}
+function setProg(p,t){document.getElementById('pbar').style.width=p+'%';document.getElementById('ppct').textContent=p+' %';document.getElementById('ptxt').textContent=t;}
+function runDemo(){var btn=document.querySelector('.run-btn');btn.classList.add('running');var apiKey=loadApiKey();var f=window._loadedFile;if(!apiKey){btn.classList.remove('running');alert('Zadej Anthropic API klíč do pole nad tlačítkem Spustit analýzu');return;}if(!f){btn.classList.remove('running');alert('Nahraj nejprve soubor CSV nebo Excel');return;}runRealAnalysis(apiKey,f);}
+
+// ── COPY ──
+function copyReport(){const p=document.querySelector('.aic.full p');if(!p)return;navigator.clipboard.writeText(p.textContent).then(()=>{const b=document.querySelector('[onclick="copyReport()"]');b.classList.add('copied');b.textContent='✓ Zkopírováno';setTimeout(()=>{b.classList.remove('copied');b.innerHTML='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Kopírovat shrnutí';},2000);});}
+function copyCard(btn){const card=btn.closest('.aic');const texts=[...card.querySelectorAll('p,.int,.rt,.wit')].map(e=>e.textContent).join('\n\n');navigator.clipboard.writeText(texts).then(()=>{btn.classList.add('copied');btn.textContent='✓';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Kopírovat';},2000);});}
+
+// ── PDF DOWNLOAD ──
+function downloadPDF(){
+  var btn=document.getElementById('pdf-btn');
+  if(btn){btn.textContent='Generuji...';btn.disabled=true;}
+  var jsPDF=window.jspdf.jsPDF;
+  function sp(t){
+    return String(t||'')
+      .replace(/[\xC0-\xC5]/g,'A').replace(/[\xE0-\xE5]/g,'a')
+      .replace(/\u010C/g,'C').replace(/\u010D/g,'c')
+      .replace(/\u010E/g,'D').replace(/\u010F/g,'d')
+      .replace(/[\xC8-\xCB\u011A]/g,'E').replace(/[\xE8-\xEB\u011B]/g,'e')
+      .replace(/[\xCC-\xCF]/g,'I').replace(/[\xEC-\xEF]/g,'i')
+      .replace(/\u0147/g,'N').replace(/\u0148/g,'n')
+      .replace(/[\xD2-\xD6]/g,'O').replace(/[\xF2-\xF6]/g,'o')
+      .replace(/\u0158/g,'R').replace(/\u0159/g,'r')
+      .replace(/\u0160/g,'S').replace(/\u0161/g,'s')
+      .replace(/\u0164/g,'T').replace(/\u0165/g,'t')
+      .replace(/[\xD9-\xDC\u016E]/g,'U').replace(/[\xF9-\xFC\u016F]/g,'u')
+      .replace(/\xDD/g,'Y').replace(/\xFD/g,'y')
+      .replace(/\u017D/g,'Z').replace(/\u017E/g,'z')
+      .replace(/\xB7/g,'-').replace(/[^\x00-\xFF]/g,'?');
+  }
+  var W=297,H=210,M=14;
+  var pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var title=sp(((document.getElementById('report-title')||{}).textContent||'Report').trim());
+  var meta=sp(((document.getElementById('report-meta')||{}).textContent||'').trim().replace(/\s+/g,' '));
+  var nM=sp(((document.getElementById('s-mentions')||{}).textContent||'-').trim());
+  var nR=sp(((document.getElementById('s-relevant')||{}).textContent||'-').trim());
+  var nT=sp(((document.getElementById('s-topics')||{}).textContent||'-').trim());
+  var today=new Date().toLocaleDateString('cs-CZ',{day:'numeric',month:'long',year:'numeric'});
+  var BG='#0d3328',ACC='#78FAAE';
+  var WH=[255,255,255],BK=[26,26,26],GR=[80,130,100],LG=[200,230,210],RD=[180,40,40],GN=[20,110,55];
+  function rgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+  function fc(h){var v=rgb(h);pdf.setFillColor(v[0],v[1],v[2]);}
+  function tc(col){if(Array.isArray(col))pdf.setTextColor(col[0],col[1],col[2]);else{var v=rgb(col);pdf.setTextColor(v[0],v[1],v[2]);}}
+  function dc(col){if(Array.isArray(col))pdf.setDrawColor(col[0],col[1],col[2]);else{var v=rgb(col);pdf.setDrawColor(v[0],v[1],v[2]);}}
+  function wh(){pdf.setFillColor(255,255,255);pdf.rect(0,0,W,H,'F');}
+  function hdr(lbl){
+    wh();
+    fc(BG);pdf.rect(0,0,W,11,'F');
+    fc(ACC);pdf.rect(0,11,W,1,'F');
+    tc(ACC);pdf.setFontSize(7);pdf.setFont('helvetica','bold');
+    pdf.text('SKODA X RESEARCH',M,7);
+    tc(GR);pdf.setFont('helvetica','normal');
+    pdf.text(title.slice(0,55),M+55,7);
+    pdf.text(sp(today),W-M,7,{align:'right'});
+    tc(BK);pdf.setFontSize(12);pdf.setFont('helvetica','bold');
+    pdf.text(lbl,M,20);
+    dc(LG);pdf.setLineWidth(0.3);pdf.line(M,23,W-M,23);
+  }
+  function ftr(pg){
+    dc(LG);pdf.setLineWidth(0.2);pdf.line(M,H-7,W-M,H-7);
+    tc(GR);pdf.setFontSize(6.5);pdf.setFont('helvetica','normal');
+    pdf.text('Duverny dokument - Skoda X Research',M,H-3);
+    pdf.text('Strana '+pg,W-M,H-3,{align:'right'});
+  }
+  var pg=1;
+  // PAGE 1: COVER
+  wh();
+  fc(BG);pdf.rect(0,0,W,56,'F');
+  fc(ACC);pdf.rect(0,56,W,1.2,'F');
+  tc(ACC);pdf.setFontSize(10);pdf.setFont('helvetica','bold');
+  pdf.text('SKODA X RESEARCH INTELLIGENCE',M,18);
+  tc(GR);pdf.setFontSize(8);pdf.setFont('helvetica','normal');
+  pdf.text('Intelligence Platform',M,26);
+  tc(WH);pdf.setFontSize(20);pdf.setFont('helvetica','bold');
+  var tl=pdf.splitTextToSize(title,W-2*M-10);
+  pdf.text(tl,M,43);
+  tc(GR);pdf.setFontSize(9);pdf.setFont('helvetica','normal');
+  pdf.text(meta,M,64);
+  var stats=[[nM,'Vstupnich zminek'],[nR,'Relevantnich'],[nT,'Temat'],[String((window._corrections||[]).length),'Oprav']];
+  stats.forEach(function(st,i){
+    var bx=M+i*65,by=76;
+    pdf.setFillColor(245,250,247);pdf.roundedRect(bx,by,60,26,2,2,'F');
+    dc(LG);pdf.setLineWidth(0.4);pdf.roundedRect(bx,by,60,26,2,2,'S');
+    tc(BG);pdf.setFontSize(15);pdf.setFont('helvetica','bold');
+    pdf.text(st[0],bx+30,by+14,{align:'center'});
+    tc(GR);pdf.setFontSize(7);pdf.setFont('helvetica','normal');
+    pdf.text(st[1],bx+30,by+22,{align:'center'});
+  });
+  tc(GR);pdf.setFontSize(7.5);
+  pdf.text('Vygenerovano: '+sp(today),M,118);
+  dc(LG);pdf.setLineWidth(0.2);pdf.line(M,H-7,W-M,H-7);
+  tc(GR);pdf.setFontSize(6.5);pdf.setFont('helvetica','normal');
+  pdf.text('Duverny dokument - Skoda X Research',M,H-3);
+  pdf.text('Strana 1',W-M,H-3,{align:'right'});
+  // PAGE 2: AI CARDS
+  pdf.addPage();pg++;hdr('AI INTERPRETACE');
+  var aiEl=document.getElementById('ai-cards');
+  var y=28;
+  if(aiEl){
+    Array.from(aiEl.querySelectorAll('.aic')).forEach(function(card){
+      var lbl=sp((card.querySelector('.ail')||{textContent:''}).textContent);
+      var items=[];
+      card.querySelectorAll('p').forEach(function(el){var t=sp(el.textContent.trim());if(t)items.push({t:t,c:BK,i:0});});
+      card.querySelectorAll('.int').forEach(function(el,n){var t=sp(el.textContent.trim());if(t)items.push({t:(n+1)+'. '+t,c:BK,i:4});});
+      card.querySelectorAll('.wit').forEach(function(el){var t=sp(el.textContent.trim());if(t)items.push({t:'! '+t,c:RD,i:4});});
+      card.querySelectorAll('.rt').forEach(function(el){var t=sp(el.textContent.trim());if(t)items.push({t:'-> '+t,c:BK,i:4});});
+      card.querySelectorAll('.rte').forEach(function(el){var t=sp(el.textContent.trim());if(t)items.push({t:t,c:GR,i:12});});
+      card.querySelectorAll('.qt').forEach(function(el){var t=sp(el.textContent.trim());if(t)items.push({t:'"'+t+'"',c:GR,i:4,it:true});});
+      if(!items.length)return;
+      var h2=14;
+      items.forEach(function(it){h2+=pdf.splitTextToSize(it.t,W-2*M-it.i-8).length*4.5+2;});
+      h2=Math.max(h2,16);
+      if(y+h2>H-12){pdf.addPage();pg++;hdr('AI INTERPRETACE (pokrac.)');y=28;}
+      pdf.setFillColor(248,252,250);pdf.roundedRect(M,y,W-2*M,h2,2,2,'F');
+      dc(LG);pdf.setLineWidth(0.3);pdf.roundedRect(M,y,W-2*M,h2,2,2,'S');
+      fc(BG);pdf.roundedRect(M,y,50,8,1,1,'F');
+      tc(ACC);pdf.setFontSize(6.5);pdf.setFont('helvetica','bold');
+      pdf.text(lbl.toUpperCase(),M+3,y+5.5);
+      var ty=y+13;
+      items.forEach(function(it){
+        tc(it.c);pdf.setFontSize(8.5);pdf.setFont('helvetica',it.it?'italic':'normal');
+        pdf.splitTextToSize(it.t,W-2*M-it.i-8).forEach(function(l){
+          if(ty>H-12){pdf.addPage();pg++;hdr('AI (pokrac.)');ty=28;}
+          pdf.text(l,M+4+it.i,ty);ty+=4.5;
+        });
+        ty+=2;
+      });
+      y=ty+8;
+    });
+  }
+  ftr(pg);
+  // PAGE 3: PIVOT
+  pdf.addPage();pg++;hdr('PREHLED TEMAT');
+  var CW=[72,22,22,34,60];
+  var CH=['Tema','Zminek','Podil','Sentiment','Top intent'];
+  var tx=M,ty2=28;
+  pdf.setFillColor(232,245,238);pdf.rect(tx,ty2-5,W-2*M,9,'F');
+  dc(LG);pdf.setLineWidth(0.3);pdf.rect(tx,ty2-5,W-2*M,9,'S');
+  tc(BG);pdf.setFontSize(7.5);pdf.setFont('helvetica','bold');
+  var hx=tx+2;
+  CH.forEach(function(h,i){pdf.text(h,hx,ty2);hx+=CW[i];});
+  ty2+=7;
+  Array.from(document.querySelectorAll('#pivot-body tr')).forEach(function(tr,ri){
+    var tds=Array.from(tr.querySelectorAll('td'));
+    if(tds.length<5)return;
+    var cells=tds.map(function(td){return sp(td.textContent.replace(/[^\w\s\-\.%]/g,'').trim());});
+    if(!cells[1]||!/^\d/.test(cells[1]))return;
+    if(ty2>H-12){pdf.addPage();pg++;hdr('PREHLED TEMAT (pokrac.)');ty2=28;}
+    if(ri%2===0){pdf.setFillColor(248,252,250);pdf.rect(tx,ty2-4,W-2*M,8,'F');}
+    dc(LG);pdf.setLineWidth(0.1);pdf.line(tx,ty2+4,W-2*M+tx,ty2+4);
+    var cx2=tx+2;
+    [1,2,3,4,5].forEach(function(ci,i){
+      var v=(cells[ci]||'');
+      if(i===0){tc(BK);pdf.setFont('helvetica','bold');}
+      else if(i===2){tc(GR);pdf.setFont('helvetica','normal');}
+      else if(i===3){
+        var sl=v.toLowerCase();
+        tc(sl.indexOf('neg')>=0?RD:sl.indexOf('poz')>=0||sl.indexOf('pos')>=0?GN:GR);
+        pdf.setFont('helvetica','bold');
+      }else{tc(BK);pdf.setFont('helvetica','normal');}
+      pdf.setFontSize(8);
+      pdf.text(v.slice(0,CW[i]>50?36:16),cx2,ty2+1);
+      cx2+=CW[i];
+    });
+    ty2+=8;
+  });
+  ftr(pg);
+  // PAGES: CHARTS 4-up
+  var cvs=Array.from(document.querySelectorAll('#chart-grid canvas'));
+  Promise.all(cvs.map(function(cv){
+    var cc=cv.closest('.cc');
+    var ct=sp(cc&&cc.querySelector('.ct')?cc.querySelector('.ct').textContent:'');
+    return html2canvas(cv,{scale:2,backgroundColor:'#ffffff',logging:false})
+      .then(function(c2){return{img:c2.toDataURL('image/png'),title:ct,w:c2.width,h:c2.height};})
+      .catch(function(){return null;});
+  })).then(function(charts){
+    var valid=charts.filter(Boolean);
+    var gw=(W-2*M-4)/2,gh=(H-30)/2-4;
+    var gx=[M,M+gw+4],gy=[26,26+gh+4];
+    for(var ci=0;ci<valid.length;ci+=4){
+      pdf.addPage();pg++;hdr('GRAFY');
+      for(var gi=0;gi<4&&(ci+gi)<valid.length;gi++){
+        var ch=valid[ci+gi];
+        var col=gi%2,row=Math.floor(gi/2);
+        var bx=gx[col],by=gy[row];
+        pdf.setFillColor(248,252,250);pdf.roundedRect(bx,by,gw,gh,2,2,'F');
+        dc(LG);pdf.setLineWidth(0.3);pdf.roundedRect(bx,by,gw,gh,2,2,'S');
+        tc(BG);pdf.setFontSize(7);pdf.setFont('helvetica','bold');
+        pdf.text(ch.title.slice(0,45),bx+3,by+7);
+        var avW=gw-6,avH=gh-12,ratio=ch.w/ch.h;
+        var iw=avW,ih=avW/ratio;
+        if(ih>avH){ih=avH;iw=avH*ratio;}
+        pdf.addImage(ch.img,'PNG',bx+(gw-iw)/2,by+10,iw,ih);
+      }
+      ftr(pg);
+    }
+    // RECORDS PAGE
+    var recs=window._allRealRecs||[];
+    if(recs.length){
+      pdf.addPage();pg++;hdr('UKAZKOVE ZAZNAMY');
+      var ry=28;
+      recs.slice(0,14).forEach(function(r,ri){
+        if(ry>H-14){pdf.addPage();pg++;hdr('ZAZNAMY (pokrac.)');ry=28;}
+        var txt=sp((r.text||'').trim()).slice(0,180);
+        var lines=pdf.splitTextToSize(txt,W-2*M-52);
+        var rh=Math.max(11,lines.length*4.2+7);
+        if(ri%2===0){pdf.setFillColor(248,252,250);pdf.rect(M,ry-2,W-2*M,rh,'F');}
+        tc(GR);pdf.setFontSize(6.5);pdf.setFont('helvetica','normal');
+        pdf.text('#'+r.id+' - '+sp(r.date||'')+' - '+sp(r.source||''),M+2,ry+3);
+        tc(BK);pdf.setFontSize(8.2);
+        lines.forEach(function(l,li){pdf.text(l,M+2,ry+7+li*4.2);});
+        var rx=W-M-46,ok=r.relevant!==false;
+        pdf.setFillColor(ok?215:250,ok?240:215,ok?225:215);
+        pdf.roundedRect(rx,ry+1,10,5,1,1,'F');
+        tc(ok?GN:RD);pdf.setFontSize(6.5);pdf.setFont('helvetica','bold');
+        pdf.text(ok?'ANO':'NE',rx+5,ry+5,{align:'center'});
+        var sl=(r.sentiment||'').toLowerCase();
+        tc(sl.indexOf('neg')>=0?RD:sl.indexOf('poz')>=0||sl.indexOf('pos')>=0?GN:GR);
+        pdf.setFontSize(7);pdf.setFont('helvetica','normal');
+        pdf.text(sp(r.sentiment||'').slice(0,12),rx+13,ry+5);
+        tc(GR);pdf.setFontSize(6.5);
+        pdf.text(sp(r.topic||'').slice(0,24),rx,ry+10);
+        ry+=rh+3;
+        dc(LG);pdf.setLineWidth(0.1);pdf.line(M,ry-1,W-M,ry-1);
+      });
+      ftr(pg);
+    }
+    var fname=title.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase()||'report';
+    pdf.save(fname+'_report.pdf');
+    if(btn){btn.textContent='Stahnout PDF';btn.disabled=false;}
+  }).catch(function(e){
+    if(btn){btn.textContent='Stahnout PDF';btn.disabled=false;}
+    alert('PDF chyba: '+e.message);
+  });
+}
+// ── INIT ──
+selectType('customer');
+function saveApiKey(v){localStorage.setItem('skodax_api_key',v.trim());var st=document.getElementById('api-key-status');if(st)st.textContent=v.trim().startsWith('sk-ant-')?'✓ Klíč uložen':'Klíč musí začínat sk-ant-...';}
+function loadApiKey(){var inp=document.getElementById('api-key-input');if(inp&&inp.value.trim())return inp.value.trim();return localStorage.getItem('skodax_api_key')||'';}
+function stopAnalysis(){window._analysisAborted=true;var s=document.getElementById('stop-btn');if(s)s.style.display='none';var rb=document.querySelector('.run-btn');if(rb){rb.style.display='';rb.classList.remove('running');}setProg(0,'Zastaveno');}
+(function(){var stored=localStorage.getItem('skodax_api_key')||'';var inp=document.getElementById('api-key-input');if(inp&&stored){inp.value=stored;var st=document.getElementById('api-key-status');if(st)st.textContent='✓ Klíč načten';}})();
+</script>
+<script>
+// ── REAL ANALYSIS PIPELINE ──
+window._analysisAborted = false;
+
+async function runRealAnalysis(apiKey, f) {
+  var btn = document.querySelector('.run-btn');
+  var stopBtn = document.getElementById('stop-btn');
+  if (stopBtn) { stopBtn.style.display = 'inline-flex'; }
+  if (btn) { btn.style.display = 'none'; }
+  window._analysisAborted = false;
+
+  // Parse file first
+  var rows = await parseFile(f);
+  if (!rows || !rows.length) {
+    alert('Soubor je prázdný nebo se nepodařilo načíst data');
+    if (btn) { btn.style.display = ''; btn.classList.remove('running'); }
+    if (stopBtn) stopBtn.style.display = 'none';
+    return;
+  }
+
+  var records = parseRows(rows);
+  var total = records.length;
+  var projName = sanitizeField((document.getElementById('proj-name')||{}).value||'') || 'Výzkum';
+  var projTopic = document.getElementById('proj-topic') ? sanitizeField(document.getElementById('proj-topic').value) : '';
+  var taxEl = document.getElementById('proj-tax');
+  var taxonomy = taxEl ? sanitizeField(taxEl.value) : '';
+  var relEl = document.getElementById('proj-relevance');
+  var criteria = relEl ? sanitizeField(relEl.value) : '';
+  if (!criteria) criteria = 'Záznam musí přímo souviset s tématem výzkumu Škoda Auto.';
+  // Reset API error display
+  var st = document.getElementById('api-key-status');
+  if (st) { st.style.color = ''; }
+  var topicList = taxonomy ? taxonomy.split('\n').filter(function(t){return t.trim();}) : [];
+  var BATCH = 15;
+
+  document.getElementById('ptitle').textContent = 'Analyzuji: ' + projName;
+  document.getElementById('analyzer').scrollIntoView({behavior:'smooth'});
+  [1,2,3,4,5].forEach(function(n){setStep(n,'pend','');});
+
+  // Step 1
+  setStep(1,'done', total + ' záznamů');
+  setProg(10, total + ' záznamů načteno');
+
+  // Step 2: Relevance
+  setStep(2,'act','filtrování...');
+  var relevant = [];
+  for (var i = 0; i < records.length; i += BATCH) {
+    if (window._analysisAborted) return cleanup(btn, stopBtn);
+    var batch = records.slice(i, i + BATCH);
+    setProg(10 + Math.round(i/records.length*25), 'Relevance: ' + i + '/' + records.length + '...');
+    var texts = batch.map(function(r, k){ return (k+1) + '. ' + sanitizeText(r.text).slice(0,250); }).join('\n\n');
+    var prompt = 'Projekt: ' + projName + (projTopic ? ', Téma: ' + projTopic : '') + '\n'
+      + 'Kritéria relevance: ' + criteria + '\n\n'
+      + 'Pro každý níže číslovaný záznam odpověz přesně ve formátu:\n'
+      + '1: ANO\n2: NE\natd.\n\n'
+      + 'Záznamy:\n' + texts;
+    var resp = await apiCall(apiKey, prompt, 800);
+    batch.forEach(function(r, k) {
+      var lines = resp.split('\n');
+      var num = k + 1;
+      var found = false;
+      for (var li = 0; li < lines.length; li++) {
+        var line = lines[li].trim();
+        if (line.indexOf(num + ':') === 0 || line.indexOf(num + '.') === 0 || line.indexOf(num + ')') === 0) {
+          r.relevant = line.toUpperCase().indexOf('ANO') >= 0;
+          found = true;
+          break;
+        }
+      }
+      if (!found) r.relevant = true;
+      if (r.relevant) relevant.push(r);
+    });
+  }
+  setStep(2,'done', relevant.length + ' relevantních (' + Math.round(relevant.length/total*100) + '%)');
+  setProg(35, relevant.length + ' relevantních z ' + total);
+
+  // Step 3: Classify
+  setStep(3,'act','klasifikuji...');
+  for (var j = 0; j < relevant.length; j += BATCH) {
+    if (window._analysisAborted) return cleanup(btn, stopBtn);
+    var batch2 = relevant.slice(j, j + BATCH);
+    setProg(35 + Math.round(j/relevant.length*30), 'Klasifikace: ' + j + '/' + relevant.length + '...');
+    var texts2 = batch2.map(function(r, k){ return (k+1) + '. ' + sanitizeText(r.text).slice(0,250); }).join('\n\n');
+    var clsInstr = topicList.length > 0
+      ? 'Témata (použij jedno z nich, nebo vytvoř nové pokud nezapadá): ' + topicList.join(', ')
+      : 'Urči téma každého záznamu (2-4 slova česky, konkrétní název)';
+    var prompt2 = clsInstr + '\n\n'
+      + 'Odpověz POUZE jako JSON pole, jedno pole na řádek:\n'
+      + '[{"topic":"nazev","sentiment":"negativní/ambivalentní/neutrální/pozitivní","intent":"hledá radu/zvažuje nákup/stěžuje si/doporučuje/porovnává/varuje/sdílí zkušenost"}]\n\n'
+      + 'Záznamy:\n' + texts2;
+    var resp2 = await apiCall(apiKey, prompt2, 1500);
+    try {
+      var cleaned = resp2.replace(/```json|```/g,'').trim();
+      var parsed = JSON.parse(cleaned);
+      batch2.forEach(function(r, k) {
+        if (parsed[k]) {
+          r.topic = parsed[k].topic || 'ostatní';
+          r.sentiment = parsed[k].sentiment || 'neutrální';
+          r.intent = parsed[k].intent || '';
+        } else {
+          r.topic = 'ostatní';
+        }
+      });
+    } catch(e) {
+      // Try line by line
+      batch2.forEach(function(r) { if (!r.topic) r.topic = 'ostatní'; });
+    }
+  }
+  setStep(3,'done','✓');
+  setProg(65,'Klasifikace hotova');
+
+  // Step 4: Pivot + subtopics
+  setStep(4,'act','témata...');
+  var pivot = {};
+  relevant.forEach(function(r) {
+    var t = r.topic || 'ostatní';
+    if (!pivot[t]) pivot[t] = {count:0,neg:0,pos:0,amb:0,neu:0,intents:{}};
+    pivot[t].count++;
+    var s = r.sentiment || '';
+    if (s.indexOf('neg') >= 0) pivot[t].neg++;
+    else if (s.indexOf('poz') >= 0 || s.indexOf('pos') >= 0) pivot[t].pos++;
+    else if (s.indexOf('amb') >= 0) pivot[t].amb++;
+    else pivot[t].neu++;
+    if (r.intent) pivot[t].intents[r.intent] = (pivot[t].intents[r.intent]||0)+1;
+  });
+  Object.keys(pivot).forEach(function(k) {
+    var v = pivot[k];
+    v.negPct = Math.round(v.neg/v.count*100);
+    v.posPct = Math.round(v.pos/v.count*100);
+    v.topIntent = Object.entries(v.intents).sort(function(a,b){return b[1]-a[1];})[0]?.[0]||'';
+    v.sentiment = v.neg>=v.pos&&v.neg>=v.amb?'negativní':v.pos>v.neg&&v.pos>=v.amb?'pozitivní':v.amb>v.neu?'ambivalentní':'neutrální';
+  });
+
+  // Subtopics for topics with 20+ records
+  window._realSubtopics = {};
+  var bigTopics = Object.entries(pivot).filter(function(e){return e[1].count>=5;});
+  for (var si = 0; si < bigTopics.length; si++) {
+    if (window._analysisAborted) break;
+    var tName = bigTopics[si][0];
+    var tRecs = relevant.filter(function(r){return r.topic===tName;});
+    setProg(65 + Math.round(si/Math.max(bigTopics.length,1)*10), 'Sub-témata: ' + tName + '...');
+    var subTexts = tRecs.slice(0,50).map(function(r,k){return (k+1)+'. '+r.text.slice(0,150);}).join('\n\n');
+    var subPrompt = 'Záznamy na téma "'+tName+'". Identifikuj 3-6 sub-témat.\n'
+      + 'Odpověz POUZE JSON: [{"label":"název","count":číslo,"pct":procento,"eval":"negativní/neutrální/pozitivní","quotes":["citace"]}]\n\n'
+      + subTexts;
+    var subResp = await apiCall(apiKey, subPrompt, 1000);
+    try { window._realSubtopics[tName] = JSON.parse(subResp.replace(/```json|```/g,'').trim()); }
+    catch(e) {}
+  }
+
+  setStep(4,'done', Object.keys(pivot).length + ' témat');
+  setProg(80,'Pivot hotov');
+
+  // Step 5: Interpretation
+  setStep(5,'act','interpretace...');
+  var entries = Object.entries(pivot).sort(function(a,b){return b[1].count-a[1].count;});
+  var topStr = entries.slice(0,6).map(function(e){return e[0]+': '+e[1].count+' zmínek ('+e[1].negPct+'% neg)';}).join('\n');
+  var sentTotals = {neg:0,pos:0,amb:0,neu:0};
+  relevant.forEach(function(r){var s=r.sentiment||'';if(s.indexOf('neg')>=0)sentTotals.neg++;else if(s.indexOf('poz')>=0||s.indexOf('pos')>=0)sentTotals.pos++;else if(s.indexOf('amb')>=0)sentTotals.amb++;else sentTotals.neu++;});
+  var interpPrompt = 'Výzkum "'+projName+'" ('+relevant.length+' relevantních z '+total+', '+Math.round(relevant.length/total*100)+'%).\n'
+    + 'Sentiment: '+Math.round(sentTotals.neg/relevant.length*100)+'% neg, '+Math.round(sentTotals.pos/relevant.length*100)+'% poz\n'
+    + 'Témata:\n' + topStr + '\n\n'
+    + 'Odpověz POUZE JSON bez textu navíc (česky, konkrétně s čísly):\n'
+    + '{'
+    + '"summary":"2-3 věty shrnutí s čísly",'
+    + '"summary2":"1-2 věty doplňující trend nebo kontext",'
+    + '"insights":["insight s číslem","insight 2","insight 3"],'
+    + '"warnings":["varovný signál 1","warning 2"],'
+    + '"recs":[["doporučení","Tým"],["doporučení 2","Tým 2"]],'
+    + '"quotes":[["citace zákazníka","CZ","zdroj"],["quote","EN","source"]]'
+    + '}';
+  var interp = {};
+  try {
+    var interpResp = await apiCall(apiKey, interpPrompt, 2000);
+    interp = JSON.parse(interpResp.replace(/```json|```/g,'').trim());
+  } catch(e) { interp = {summary:'Analýza dokončena.',insights:[],recs:[]}; }
+
+  setStep(5,'done','✓');
+  setProg(100,'Hotovo!');
+
+  // Show results
+  window._realDataLoaded = true;
+  showRealReport(relevant, pivot, entries, interp, total, projName);
+  cleanup(btn, stopBtn);
+  setTimeout(function(){document.getElementById('report').scrollIntoView({behavior:'smooth'});}, 500);
+}
+
+function cleanup(btn, stopBtn) {
+  if (btn) { btn.style.display = ''; btn.classList.remove('running'); }
+  if (stopBtn) stopBtn.style.display = 'none';
+}
+
+async function parseFile(f) {
+  return new Promise(function(resolve) {
+    if (f.name.toLowerCase().endsWith('.csv')) {
+      var rd = new FileReader();
+      rd.onload = function(e) {
+        var text = e.target.result;
+        var lines = text.split('\n').filter(function(l){return l.trim();});
+        if (!lines.length) return resolve([]);
+        var sep = lines[0].indexOf(';') >= 0 ? ';' : ',';
+        var headers = lines[0].split(sep).map(function(h){return h.replace(/^"|"$/g,'').trim();});
+        var rows = lines.slice(1).map(function(line){
+          var vals = line.split(sep).map(function(v){return v.replace(/^"|"$/g,'').trim();});
+          var obj = {};
+          headers.forEach(function(h,i){obj[h]=vals[i]||'';});
+          return obj;
+        });
+        resolve(rows);
+      };
+      rd.readAsText(f, 'UTF-8');
+    } else {
+      var rd2 = new FileReader();
+      rd2.onload = function(e) {
+        try {
+          var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+          var ws = wb.Sheets[wb.SheetNames[0]];
+          resolve(XLSX.utils.sheet_to_json(ws, {defval:''}));
+        } catch(err) {
+          alert('Chyba při čtení Excel souboru: ' + err.message);
+          resolve([]);
+        }
+      };
+      rd2.readAsArrayBuffer(f);
+    }
+  });
+}
+
+function parseRows(rows) {
+  if (!rows || !rows.length) return [];
+  var keys = Object.keys(rows[0]);
+  function find(names) { return keys.find(function(k){return names.some(function(n){return k.toLowerCase().indexOf(n)>=0;});}); }
+  var textCol = find(['text','content','body','message','post']);
+  var dateCol = find(['date','time','created','published']);
+  var idCol = find(['sentioneid','id']);
+  if (!textCol) return [];
+  var srcMap = {twitter:'Twitter',ig:'Instagram',youtube:'YouTube',fbgen:'Facebook',tik:'TikTok'};
+  return rows.map(function(row,i){
+    var rawId = idCol ? String(row[idCol]||'') : '';
+    var prefix = rawId.split('_')[0].toLowerCase();
+    var src = Object.keys(srcMap).find(function(k){return prefix.indexOf(k)===0;});
+    return {
+      id:i+1, text:String(row[textCol]||'').trim(),
+      date:dateCol?String(row[dateCol]||'').slice(0,10):'',
+      source:src?srcMap[src]:'Web', rawId:rawId,
+      topic:'', sentiment:'', intent:'', relevant:false
+    };
+  }).filter(function(r){return r.text.length>5;});
+}
+
+// Input sanitization
+function sanitizeText(text) {
+  if (typeof text !== 'string') return '';
+  return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').slice(0, 2000);
+}
+function sanitizeField(val) {
+  if (typeof val !== 'string') return '';
+  return val.replace(/[<>]/g, '').trim().slice(0, 500);
+}
+
+var _apiCallCount = 0;
+
+function showApiError(msg) {
+  var st = document.getElementById('api-key-status');
+  if (st) { st.textContent = '\u26a0 ' + msg; st.style.color = '#ff6b6b'; }
+}
+
+async function apiCall(apiKey, prompt, maxTokens) {
+  if (!apiKey || !apiKey.startsWith('sk-ant-') || apiKey.length < 20) {
+    showApiError('Neplatn\u00fd form\u00e1t API kl\u00ed\u010de. Kl\u00ed\u010d mus\u00ed za\u010d\u00ednat sk-ant-...');
+    return '';
+  }
+  _apiCallCount++;
+  if (_apiCallCount > 500) {
+    showApiError('P\u0159ekro\u010den limit vol\u00e1n\u00ed. Obnovte str\u00e1nku.');
+    return '';
+  }
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: maxTokens || 1000,
+        temperature: 0,
+        messages: [{role: 'user', content: prompt}]
+      })
+    });
+    if (!resp.ok) {
+      var errData = await resp.json().catch(function(){return {};});
+      var code = resp.status;
+      if (code === 401) showApiError('Neplatn\u00fd API kl\u00ed\u010d. Zkontroluj na console.anthropic.com.');
+      else if (code === 429) showApiError('Rate limit API. Po\u010dkej chv\u00edli a zkus znovu.');
+      else showApiError('API chyba ' + code + ': ' + (errData.error ? errData.error.message : ''));
+      return '';
+    }
+    var data = await resp.json();
+    if (data.error) { showApiError('API: ' + data.error.message); return ''; }
+    if (!data.content || !data.content[0] || !data.content[0].text) { return ''; }
+    return data.content[0].text.trim();
+  } catch(e) {
+    showApiError('S\u00ed\u0165ov\u00e1 chyba: ' + e.message);
+    return '';
+  }
+}
+
+function showRealReport(relevant, pivot, entries, interp, total, projName) {
+  // Ensure report section is visible
+  var reportEl = document.getElementById('report');
+  if (reportEl) reportEl.style.display = 'block';
+  // Stats
+  document.getElementById('report-title').textContent = projName;
+  var sm = document.getElementById('s-mentions'); if(sm) sm.textContent = total.toLocaleString();
+  var sr = document.getElementById('s-relevant'); if(sr) sr.textContent = relevant.length.toLocaleString();
+  var sp = document.getElementById('s-rel-pct'); if(sp) sp.textContent = Math.round(relevant.length/total*100);
+  var st = document.getElementById('s-topics'); if(st) st.textContent = Object.keys(pivot).length;
+
+  // AI interpretation
+  if (interp.summary && typeof renderAICards === 'function') {
+    try {
+      renderAICards({ai:{cs:{summary:interp.summary,summary2:interp.summary2||'',insights:interp.insights||[],warnings:interp.warnings||[],recs:interp.recs||[],quotes:interp.quotes||[]},en:{summary:interp.summary,summary2:interp.summary2||'',insights:interp.insights||[],warnings:interp.warnings||[],recs:interp.recs||[],quotes:interp.quotes||[]}}}, lang||'cs');
+    } catch(e) {
+      var aiEl=document.getElementById('ai-cards');
+      if(aiEl) aiEl.innerHTML='<div style="padding:1rem;color:var(--txm)">'+interp.summary+'</div>';
+    }
+  }
+
+  // Build charts
+  var sentCounts = [0,0,0,0];
+  var intentCounts = {};
+  var srcCounts = {};
+  var byDay = {};
+  relevant.forEach(function(r){
+    var s=r.sentiment||'';
+    if(s.indexOf('neg')>=0) sentCounts[0]++;
+    else if(s.indexOf('amb')>=0) sentCounts[1]++;
+    else if(s.indexOf('poz')>=0||s.indexOf('pos')>=0) sentCounts[3]++;
+    else sentCounts[2]++;
+    if(r.intent) intentCounts[r.intent]=(intentCounts[r.intent]||0)+1;
+    var src=r.source||'Web'; srcCounts[src]=(srcCounts[src]||0)+1;
+    if(r.date){var d=r.date.slice(0,10);if(!byDay[d])byDay[d]={cz:0,en:0,de:0};var t=r.text||'';if(/[äöüÄÖÜß]/.test(t))byDay[d].de++;else if(/[áčďéěíňóřšťúůýž]/i.test(t))byDay[d].cz++;else byDay[d].en++;}
+  });
+  var intentEntries = Object.entries(intentCounts).sort(function(a,b){return b[1]-a[1];}).slice(0,7);
+  var srcEntries = Object.entries(srcCounts).sort(function(a,b){return b[1]-a[1];});
+  var days = Object.keys(byDay).sort();
+  var srcColors = ['rgba(60,220,110,1)','rgba(80,180,255,1)','rgba(255,200,60,1)','rgba(255,150,60,1)','rgba(220,80,200,1)','rgba(160,160,160,1)'];
+  var D = {
+    sent: sentCounts,
+    sentL: ['Negativní','Ambivalentní','Neutrální','Pozitivní'],
+    intent: intentEntries.map(function(e){return e[1];}),
+    intentL: intentEntries.map(function(e){return e[0];}),
+    topics: {
+      labels: entries.slice(0,8).map(function(e){return e[0];}),
+      data: entries.slice(0,8).map(function(e){return e[1].count;}),
+      colors: entries.slice(0,8).map(function(e){return e[1].negPct>50?'rgba(255,80,80,.9)':e[1].posPct>40?'rgba(80,255,140,.9)':'rgba(200,180,80,.8)';})
+    },
+    trend: {
+      cz: days.map(function(d){return byDay[d].cz;}),
+      en: days.map(function(d){return byDay[d].en;}),
+      de: days.map(function(d){return byDay[d].de;}),
+      weeks: {labels:days, cz:days.map(function(d){return byDay[d].cz;}), en:days.map(function(d){return byDay[d].en;}), de:days.map(function(d){return byDay[d].de;})},
+      months: {labels:[], cz:[], en:[], de:[]}
+    },
+    lang: [
+      relevant.filter(function(r){return /[áčďéěíňóřšťúůýž]/i.test(r.text||'');}).length,
+      relevant.filter(function(r){return !/[áčďéěíňóřšťúůýžäöüÄÖÜß]/.test(r.text||'')&&(r.text||'').length>5;}).length,
+      relevant.filter(function(r){return /[äöüÄÖÜß]/.test(r.text||'');}).length
+    ],
+    extra: {
+      type:'bar', stacked:true,
+      labels: entries.slice(0,5).map(function(e){return e[0];}),
+      datasets: [
+        {label:'Neg %', data:entries.slice(0,5).map(function(e){return e[1].negPct;}), color:'rgba(220,80,80,.8)'},
+        {label:'Neu %', data:entries.slice(0,5).map(function(e){return Math.round(e[1].neu/e[1].count*100);}), color:'rgba(150,155,150,.6)'},
+        {label:'Pos %', data:entries.slice(0,5).map(function(e){return e[1].posPct;}), color:'rgba(80,220,120,.8)'}
+      ]
+    },
+    sources: {
+      labels: srcEntries.map(function(e){return e[0];}),
+      data: srcEntries.map(function(e){return e[1];}),
+      colors: srcEntries.map(function(_,i){return srcColors[i%srcColors.length];})
+    },
+    tableLabel:'Přehled témat',
+    tableHead:['Téma','Zmínky','Podíl','Sentiment','Top intent'],
+    tableRows: entries.map(function(e){return [e[0],e[1].count,Math.round(e[1].count/relevant.length*100),e[1].sentiment,e[1].topIntent||'—'];}),
+    subtopics: window._realSubtopics||{}
+  };
+  if (typeof buildCharts==='function') {
+    try {
+      buildCharts(D);
+    } catch(e) {
+      var st=document.getElementById('api-key-status');
+      if(st){st.textContent='⚠ Chyba grafů: '+e.message;st.style.color='#ff6b6b';}
+    }
+  }
+  if (typeof buildTable==='function') {
+    try {
+      buildTable(D);
+    } catch(e) {
+      var st2=document.getElementById('api-key-status');
+      if(st2){st2.textContent='⚠ Chyba tabulky: '+e.message;st2.style.color='#ff6b6b';}
+    }
+  }
+
+  // Raw data table
+  var realRecs=relevant.map(function(r,i){return Object.assign({},r,{id:i+1,interactions:0,lang:'',author:'',entities:'',url:r.url||''});});
+  window._allRealRecs=realRecs;
+  filtRecs=realRecs.slice();
+  var tsel=document.getElementById('ftopic');
+  if(tsel) tsel.innerHTML='<option value="">Všechna témata</option>'+Object.keys(pivot).map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+  exPage=1;
+  if(typeof filterEx==='function') filterEx();
+  if(typeof updatePrintFields==='function') updatePrintFields();
+}
+</script>
+</body>
+</html>
